@@ -61,11 +61,7 @@ public class ECClient {
         }
         epReq.writeToStream(os);
         BufferedInputStream is = new BufferedInputStream(socket.getInputStream());
-        //try {
-            epResp.readFromStream(is);
-        /*} catch (IOException e) {
-            throw new ECException("Error reading from socket.", epResp, e);
-        }*/
+        epResp.readFromStream(is);
         
         if (tracer != null) {
             tracer.print("Received EC packet...\n" + epResp.toString() + "\n\n");

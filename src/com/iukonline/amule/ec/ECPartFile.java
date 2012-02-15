@@ -134,7 +134,10 @@ public class ECPartFile {
                 sourceNames.add(new ECPartFileSourceName(itr));
             }
         }
-
+        
+        // Normalize content...
+        if (getStatus() == PS_EMPTY && getSourceCount() > 0) setStatus(PS_READY);
+        
     }
     
     void setClient(ECClient client) {
@@ -413,29 +416,30 @@ public class ECPartFile {
     
     public static class ECPartFileComparator implements Comparator<ECPartFile> {
         
-        private int compType;
+        public enum ComparatorType {
+            FILENAME, STATUS, TRANSFERED, PROGRESS
+        }
         
-        public static final byte AC_SETTING_SORT_FILENAME = 0x0;
-        public static final byte AC_SETTING_SORT_STATUS = 0x1;
-        public static final byte AC_SETTING_SORT_TRANSFERED = 0x2;
-        public static final byte AC_SETTING_SORT_PROGRESS = 0x3;
+        private ComparatorType compType;
         
-        public ECPartFileComparator(int compType) {
+
+        
+        public ECPartFileComparator(ComparatorType compType) {
             this.compType = compType;
         }
 
         @Override
         public int compare(ECPartFile object1, ECPartFile object2) {
             switch (compType) {
-            case AC_SETTING_SORT_STATUS:
+            case STATUS:
                 return object1.getStatus() - object2.getStatus();
-            case AC_SETTING_SORT_TRANSFERED:
+            case TRANSFERED:
                 return (int)(object1.getSizeDone() - object2.getSizeDone());
-            case AC_SETTING_SORT_PROGRESS:
+            case PROGRESS:
                 float p1 = ((float) object1.getSizeDone()) * 100f / ((float) object1.getSizeFull());
                 float p2 = ((float) object2.getSizeDone()) * 100f / ((float) object2.getSizeFull());
                 return p2 > p1 ? 1 : (p2 < p1 ? -1 : 0);
-            case AC_SETTING_SORT_FILENAME:
+            case FILENAME:
             default:
                 return object1.getFileName().compareToIgnoreCase(object2.getFileName());
             }
