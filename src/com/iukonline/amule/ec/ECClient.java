@@ -304,8 +304,8 @@ public class ECClient {
         try {
             epReq.addTag(new ECTag(ECTag.EC_TAG_PARTFILE, ECTag.EC_TAGTYPE_HASH16, hash));
         } catch (DataFormatException e) {
-            // TODO Auto-generated catch block
-            throw new ECException("Error creating request response", epReq, e);
+           
+            throw new ECException("Error creating request", epReq, e);
         }
         
         
@@ -317,6 +317,30 @@ public class ECClient {
         default:
             throw new ECException("Unexpected response download queue request", epResp);        
         }
+        
+    }
+    
+    public void renameDownload(byte[] hash, String newName) throws ECException, IOException {
+        ECPacket epReq = new ECPacket();
+        epReq.setOpCode(ECPacket.EC_OP_RENAME_FILE);
+        try {
+            ECTag t = new ECTag(ECTag.EC_TAG_PARTFILE, ECTag.EC_TAGTYPE_HASH16, hash);
+            t.addSubTag(new ECTag(ECTag.EC_TAG_PARTFILE_NAME, ECTag.EC_TAGTYPE_STRING, newName));
+            epReq.addTag(t);
+            
+        } catch (DataFormatException e) {
+            // TODO Auto-generated catch block
+            throw new ECException("Error creating request", epReq, e);
+        }
+        
+        ECPacket epResp = sendRequestAndWaitResponse(epReq);
+        switch (epResp.getOpCode()) {
+        case ECPacket.EC_OP_NOOP:
+            // TODO Do something?
+            return;
+        default:
+            throw new ECException("Unexpected response to set priority", epResp);        
+        }        
         
     }
     

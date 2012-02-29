@@ -62,7 +62,6 @@ public class ECPartFile {
     private Date lastSeenComplete;  //EC_TAG_PARTFILE_LAST_SEEN_COMP            = 0x0311;;
     
     private int commentCount;
-    private boolean hasComments;
     private ArrayList<ECPartFileComment> comments;
     
     private ArrayList<ECPartFileSourceName> sourceNames;
@@ -74,8 +73,6 @@ public class ECPartFile {
         sourceNames = new ArrayList<ECPartFileSourceName>();
         
         hasDetail = false;
-        hasComments = false;
-        
     }
     
     public ECPartFile(ECTag t) throws DataFormatException {
@@ -238,10 +235,6 @@ public class ECPartFile {
         this.lastSeenComplete = new Date(lastSeenComplete);
     }
 
-    public boolean hasComments() {
-        return hasComments;
-    }
-
     public int getCommentCount() {
         return commentCount;
     }
@@ -280,8 +273,8 @@ public class ECPartFile {
         client.changeDownloadStatus(hash, ECPacket.EC_OP_PARTFILE_RESUME); 
     }    
     
-    public void rename(String newName) {
-        // TODO do something
+    public void rename(String newName) throws ECException, IOException {
+        client.renameDownload(hash, newName);
     }
     
     public void remove() throws ECException, IOException {
