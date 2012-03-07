@@ -324,10 +324,8 @@ public class ECClient {
         ECPacket epReq = new ECPacket();
         epReq.setOpCode(ECPacket.EC_OP_RENAME_FILE);
         try {
-            ECTag t = new ECTag(ECTag.EC_TAG_PARTFILE, ECTag.EC_TAGTYPE_HASH16, hash);
-            t.addSubTag(new ECTag(ECTag.EC_TAG_PARTFILE_NAME, ECTag.EC_TAGTYPE_STRING, newName));
-            epReq.addTag(t);
-            
+            epReq.addTag(new ECTag(ECTag.EC_TAG_KNOWNFILE, ECTag.EC_TAGTYPE_HASH16, hash));
+            epReq.addTag(new ECTag(ECTag.EC_TAG_PARTFILE_NAME, ECTag.EC_TAGTYPE_STRING, newName));
         } catch (DataFormatException e) {
             // TODO Auto-generated catch block
             throw new ECException("Error creating request", epReq, e);
@@ -368,5 +366,11 @@ public class ECClient {
         default:
             throw new ECException("Unexpected response to set priority", epResp);        
         }
+    }
+
+    @Override
+    public String toString() {
+        //return String.format("ECClient [clientName=%s, clientVersion=%s, socket=%s]", clientName, clientVersion, socket);
+        return String.format("ECClient [socket=%s]", socket);
     }
 }

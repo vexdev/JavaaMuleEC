@@ -128,7 +128,7 @@ public class ECPacket implements ECCodes, ECTagTypes {
         
         in.read(bufUint, 0, 4);
         len = ECUtils.bytesToUint(bufUint, 4, true, debug);
-        //System.out.println("----- Packet Length: " + len);
+        if (debug) System.out.println("----- Packet Length: " + len);
         
         if (len < 3) {
             // TODO Gestire meglio

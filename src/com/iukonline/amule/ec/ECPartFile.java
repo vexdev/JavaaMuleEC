@@ -137,7 +137,7 @@ public class ECPartFile {
         
     }
     
-    void setClient(ECClient client) {
+    public void setClient(ECClient client) {
         this.client = client;
     }
     
@@ -251,6 +251,19 @@ public class ECPartFile {
         return sourceNames;
     }   
     
+    public byte getWorstRating() {
+        byte ret = -1;
+        
+        if (comments != null) {
+            Iterator <ECPartFileComment> i = comments.iterator();
+            while (i.hasNext()) {
+                byte thisRating = i.next().rating;
+                if (ret == -1 || ret > thisRating) ret = thisRating;
+            }
+        }
+        
+        return (ret == -1 ? RATING_NOT_RATED : ret);
+    }
     
     
     

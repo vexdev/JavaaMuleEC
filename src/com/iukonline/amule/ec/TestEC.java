@@ -1,5 +1,6 @@
 package com.iukonline.amule.ec;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.Socket;
 import java.net.UnknownHostException;
@@ -124,6 +125,53 @@ public class TestEC {
 
     }
     
+    private static void runTest9()   {
+        
+        
+        String packetDump = new String();
+
+        packetDump += "00 00 00 22 ";  // Flags
+        packetDump += "00 00 00 6c ";  // Len
+        packetDump += "25 "; // OP Code
+        packetDump += "02 "; // Tag count
+        packetDump += "e0 ";  
+        packetDump += "a0 80 "; 
+        packetDump += "09 10 b9 19 3b 2e 2e 5d 02 84 0d f5 2c ";
+        packetDump += "7a c2 7d 2f 86 ";
+        packetDump += "d8 82 "; // TAG -> 602 -> 301 -> EC_TAG_PARTFILE_NAME
+        packetDump += "06 "; // TAG TYPE STRING
+        packetDump += "51 "; // LENTGTH
+        packetDump += "78 32 36 34 2e 49 6c ";
+        packetDump += "2e 4d 69 73 74 65 72 6f 2e 64 65 6c 6c 65 2e 44 ";
+        packetDump += "6f 64 69 63 69 2e 53 65 64 69 65 2e 2d 2e 54 68 ";
+        packetDump += "65 2e 54 77 65 6c 76 65 2e 43 68 61 69 72 73 2e ";
+        packetDump += "2d 2e 4d 2e 42 72 6f 6f 6b 73 2e 31 39 37 30 2e ";
+        packetDump += "50 4c 69 53 53 2e 6d 6b 76 00 ";
+        
+        
+        
+        
+        int len = packetDump.length();
+        byte[] buf = new byte[len / 3];
+        for (int i = 0; i < len; i += 3) {
+            buf[i / 3] = (byte) ((Character.digit(packetDump.charAt(i), 16) << 4)
+                                 + Character.digit(packetDump.charAt(i+1), 16));
+        }
+        
+ 
+        ByteArrayInputStream packetStream = new ByteArrayInputStream(buf);
+        ECPacket p = new ECPacket();
+        try {
+            p.readFromStream(packetStream);
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        
+        System.out.println(p.toString());
+        
+    }
+    
 
     /**
      * @param args
@@ -147,14 +195,16 @@ public class TestEC {
         
         try {
             //socket = new Socket("192.168.56.101", 4712);
-            socket = new Socket("***REMOVED***", 4712);
+            //socket = new Socket("***REMOVED***", 4712);
             //socket = new Socket("10.51.18.51", 4712);
+            
+            
             cl.setSocket(socket);
             
             //System.out.print("Logging in...\n");
             //cl.login();
             
-            runTest8();
+            runTest9();
             
             System.out.print("All done!\n");
             socket.close();
@@ -166,7 +216,7 @@ public class TestEC {
             System.err.print("I/O error:\n" + e.getMessage());
             e.printStackTrace();
             System.exit(1);
-        } catch (ECException e) {
+       /* } catch (ECException e) {
             System.err.print("Client/Server communication error:\n" + e.getMessage());
             if (e.getCausePacket() != null) {
                 System.err.print("Packet causing error:\n");
