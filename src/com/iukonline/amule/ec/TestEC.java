@@ -94,8 +94,6 @@ public class TestEC {
         runTest3();
         runTest1();
         
-        ECPartFile resumed = null;
-                
         for (int i = 0; i < dlQueue.length; i++) {
             if (dlQueue[i].getPrio() >= ECPartFile.PR_AUTO) {
                 System.out.println("Changing priority of file " + dlQueue[i].getFileName() + "...");

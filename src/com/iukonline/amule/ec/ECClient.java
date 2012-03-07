@@ -24,8 +24,6 @@ public class ECClient {
     private Socket socket;
     private PrintStream tracer;
     
-    private boolean loggedIn = false;
-   
     public void setClientName(String clientName) {
         this.clientName = clientName;
     }
