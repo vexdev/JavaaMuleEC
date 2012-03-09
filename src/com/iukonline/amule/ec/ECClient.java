@@ -120,10 +120,8 @@ public class ECClient {
         switch (epResp.getOpCode()) {
         case ECPacket.EC_OP_AUTH_OK:
             // TODO Save server version
-            this.loggedIn = true;
             return true;
         case ECPacket.EC_OP_AUTH_FAIL:
-            this.loggedIn = false;
             return false;
         default:
             throw new ECException("Unexpected response to login request", epResp);
@@ -265,9 +263,6 @@ public class ECClient {
     }
     
     public ECStats getStats() throws ECException, IOException {
-       /*if (! this.loggedIn) {
-            throw new ECException("Client not logged in");
-        }*/
         
         ECPacket epReq = new ECPacket();
         epReq.setOpCode(ECPacket.EC_OP_STAT_REQ);
@@ -278,7 +273,6 @@ public class ECClient {
             
             ECStats stats = new ECStats();
             try {
-                stats.setClient(this);
                 stats.setSpeedDl(epResp.getTagByName(ECTag.EC_TAG_STATS_DL_SPEED).getTagValueUInt());
                 stats.setSpeedUl(epResp.getTagByName(ECTag.EC_TAG_STATS_UL_SPEED).getTagValueUInt());
             } catch (DataFormatException e) {
@@ -293,9 +287,7 @@ public class ECClient {
     }
     
     void changeDownloadStatus(byte[] hash, byte opCode) throws ECException, IOException {
-       /* if (! this.loggedIn) {
-            throw new ECException("Client not logged in");
-        }*/
+
         
         ECPacket epReq = new ECPacket();
         epReq.setOpCode(opCode);
