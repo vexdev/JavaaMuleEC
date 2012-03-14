@@ -17,12 +17,17 @@ import java.util.zip.DataFormatException;
 
 public class ECClient {
     
-
     private String clientName;
     private String clientVersion;
     private byte[] hashedPassword;
     private Socket socket;
     private PrintStream tracer;
+    
+    private boolean useUTF8Compression = false;
+    
+    public void enableUTF8Compression() {
+        useUTF8Compression = true;
+    }
     
     public void setClientName(String clientName) {
         this.clientName = clientName;
@@ -52,6 +57,8 @@ public class ECClient {
     
     public ECPacket sendRequestAndWaitResponse(ECPacket epReq, boolean tryLogin) throws IOException, ECException {
         ECPacket epResp = new ECPacket();
+        
+        if (useUTF8Compression) epReq.addAccepts(ECCodes.EC_FLAG_UTF8_NUMBERS);
         
         OutputStream os = socket.getOutputStream();
         if (tracer != null) {
@@ -232,7 +239,6 @@ public class ECClient {
         try {
             epReq.addTag(new ECTag(ECTag.EC_TAG_PARTFILE, ECTag.EC_TAGTYPE_HASH16, hash));
         } catch (DataFormatException e) {
-            // TODO Auto-generated catch block
             throw new ECException("Error creating request", epReq, e);
         }
         
@@ -249,7 +255,6 @@ public class ECClient {
                     dl = new ECPartFile(epResp.getTagByName(ECPacket.EC_TAG_PARTFILE));
                 }
             } catch (DataFormatException e) {
-                // TODO Auto-generated catch block
                 throw new ECException("Unexpected response download queue request", epResp);
             }
             dl.setClient(this);
@@ -317,7 +322,6 @@ public class ECClient {
             epReq.addTag(new ECTag(ECTag.EC_TAG_KNOWNFILE, ECTag.EC_TAGTYPE_HASH16, hash));
             epReq.addTag(new ECTag(ECTag.EC_TAG_PARTFILE_NAME, ECTag.EC_TAGTYPE_STRING, newName));
         } catch (DataFormatException e) {
-            // TODO Auto-generated catch block
             throw new ECException("Error creating request", epReq, e);
         }
         
@@ -344,7 +348,6 @@ public class ECClient {
             //epReq.addTag(new ECTag(ECTag.EC_TAG_PARTFILE, ECTag.EC_TAGTYPE_HASH16, hash));
             
         } catch (DataFormatException e) {
-            // TODO Auto-generated catch block
             throw new ECException("Error creating request", epReq, e);
         }
         

@@ -341,25 +341,12 @@ public class ECTag implements ECCodes, ECTagTypes {
 
     }
     
-    public void readAllBytes(InputStream in, byte[] buf, int offset, int len) throws IOException {
-        
-        int remaining = (int) len;
-        int pos = 0;
-        int bytes = 0;
-        
-        while (remaining > 0) {
-            bytes = in.read(buf, pos, remaining);
-            if (bytes < 0) {
-                throw new IOException("0 bytes read");
-            } else {
-                remaining -= bytes;
-                pos += bytes;
-                //System.out.println("Read "+pos+"/"+len+" bytes");
-            }
-        }
+
+    public void readFromStream(InputStream in) throws IOException {
+        readFromStream(in, false);
     }
     
-    public void readFromStream(InputStream in) throws IOException {
+    public void readFromStream(InputStream in, boolean isUTF8Compressed) throws IOException {
         
         boolean debug = false;  // TODO remove debug...
         
@@ -367,7 +354,7 @@ public class ECTag implements ECCodes, ECTagTypes {
         
         int bytes = -1;
 
-        this.readAllBytes(in, bufUint, 0, 2);
+        ECUtils.readAllBytes(in, bufUint, 0, 2, isUTF8Compressed);
         //bytes = in.readAll(bufUint, 0, 2);
 
         long tagName = ECUtils.bytesToUint(bufUint, 2, true);
@@ -389,7 +376,7 @@ public class ECTag implements ECCodes, ECTagTypes {
         
         //bytes = in.readAll(bufUint, 0, 4);
         //if (bytes < 4) throw new IOException("Not all bytes were read. Expecting 4 read " + bytes);
-        this.readAllBytes(in, bufUint, 0,4);
+        ECUtils.readAllBytes(in, bufUint, 0, 4, isUTF8Compressed);
         
         long len = ECUtils.bytesToUint(bufUint, 4, true, debug);
         long originalLength = len;
@@ -401,13 +388,13 @@ public class ECTag implements ECCodes, ECTagTypes {
             
             //bytes = in.readAll(bufUint, 0, 2);
             //if (bytes < 2) throw new IOException("Not all bytes were read. Expecting 2 read " + bytes);
-            this.readAllBytes(in, bufUint, 0, 2);
+            ECUtils.readAllBytes(in, bufUint, 0, 2, isUTF8Compressed);
             int subTagCount = (int) ECUtils.bytesToUint(bufUint, 2, true);
             
             
             for (int i = 0; i < subTagCount; i++) {
                 ECTag subTag = new ECTag();
-                subTag.readFromStream(in);
+                subTag.readFromStream(in, isUTF8Compressed);
                 len -= subTag.getLength(true);
                 addSubTag(subTag);
                 if (debug) System.out.println("----- Remaining Tag Length: " + len);
@@ -423,7 +410,7 @@ public class ECTag implements ECCodes, ECTagTypes {
         if (len > 0) {
             //bytes = in.readAll(buf, 0, (int) len);
             //if (bytes < len) throw new IOException("Not all bytes were read Expecting " + len + " read " + bytes);
-            this.readAllBytes(in, buf, 0, (int)len);
+            ECUtils.readAllBytes(in, buf, 0, (int)len);
         }
         
         

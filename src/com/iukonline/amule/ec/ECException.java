@@ -3,6 +3,8 @@ package com.iukonline.amule.ec;
 
 
 public class ECException extends Exception {
+    
+    static final long serialVersionUID = 5741767616156419860L;
 
     /**
      * 
@@ -23,7 +25,6 @@ public class ECException extends Exception {
     
 
     public ECException(String detailMessage) {
-        // TODO Auto-generated constructor stub
         super(detailMessage);
     }
 

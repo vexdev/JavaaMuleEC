@@ -40,6 +40,10 @@ public class ECPacket implements ECCodes, ECTagTypes {
     public void setAccepts(int accepts) {
         this.accepts = accepts;
     }
+    
+    public void addAccepts(int accepts) {
+        this.accepts |= accepts;
+    }
 
     public byte getOpCode() {
         return opCode;
@@ -58,7 +62,11 @@ public class ECPacket implements ECCodes, ECTagTypes {
     }
 
     public boolean hasAccetps() {
-        return (this.transmissionFlags & EC_FLAG_ACCEPTS) == EC_FLAG_ACCEPTS;
+        return (transmissionFlags & EC_FLAG_ACCEPTS) == EC_FLAG_ACCEPTS;
+    }
+    
+    public boolean isUTF8Compressed() {
+        return (transmissionFlags & EC_FLAG_UTF8_NUMBERS) == EC_FLAG_UTF8_NUMBERS;
     }
     
     public ECTag getTagByName(short tagName) {
@@ -115,7 +123,7 @@ public class ECPacket implements ECCodes, ECTagTypes {
         in.read(bufUint, 0, 4);
         int trFlags = (int) ECUtils.bytesToUint(bufUint, 4, true);
         if (! parseTrasmissionFlags(trFlags)) {
-            // Raise exception
+            // TODO Raise exception
         }
         setTransmissionFlags(trFlags);
 
@@ -126,7 +134,8 @@ public class ECPacket implements ECCodes, ECTagTypes {
             setAccepts(accepts);
         }
         
-        in.read(bufUint, 0, 4);
+        ECUtils.readAllBytes(in, bufUint, 0, 4, false); // Len is never UTF-8 compressed
+        //in.read(bufUint, 0, 4);
         len = ECUtils.bytesToUint(bufUint, 4, true, debug);
         if (debug) System.out.println("----- Packet Length: " + len);
         
@@ -135,11 +144,21 @@ public class ECPacket implements ECCodes, ECTagTypes {
             throw new IOException("Invalid packet length " + len);
         }
         
-        setOpCode((byte) in.read());
-        in.read(bufUint, 0, 2);
+        
+        
+        
+        
+        //setOpCode((byte) in.read());
+        //in.read(bufUint, 0, 2);
+        
+        ECUtils.readAllBytes(in, bufUint, 0, 1);
+        setOpCode((byte) bufUint[0]);
+        ECUtils.readAllBytes(in, bufUint, 0, 2, isUTF8Compressed());
         len -= 3;
         
         int tagCount = (int) ECUtils.bytesToUint(bufUint, 2, true);
+        
+        if (debug) System.out.println("--- Packet contains " + tagCount + " tags");
         
         for (int i = 0; i < tagCount; i++) {
             
@@ -147,7 +166,7 @@ public class ECPacket implements ECCodes, ECTagTypes {
             
             ECTag tag = new ECTag();
             try {
-                tag.readFromStream(in);
+                tag.readFromStream(in, isUTF8Compressed());
             } catch (IOException e) {
                 // Let's save what we read anyway
                 addTag(tag);
@@ -157,13 +176,15 @@ public class ECPacket implements ECCodes, ECTagTypes {
             len -= tag.getLength(true);
             if (len < 0) {
                 // TODO Gestire meglio
-                throw new IOException("Tags exceed packet length " + len);
+                // TODO Rimosso per problema lettura UTF-8
+                // throw new IOException("Tags exceed packet length " + len);
             }
         }
         
         if (len != 0) {
             // TODO Gestire meglio
-            throw new IOException("After tag parsing " + len + " more bytes should be present");
+         // TODO Rimosso per problema lettura UTF-8
+            // throw new IOException("After tag parsing " + len + " more bytes should be present");
         }
         
     }
