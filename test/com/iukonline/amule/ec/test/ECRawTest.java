@@ -8,7 +8,6 @@ import java.util.zip.DataFormatException;
 import org.junit.Test;
 
 import com.iukonline.amule.ec.ECException;
-import com.iukonline.amule.ec.ECPacket;
 import com.iukonline.amule.ec.ECRawPacket;
 
 public class ECRawTest {
