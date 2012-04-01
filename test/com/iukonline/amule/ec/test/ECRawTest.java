@@ -29,7 +29,6 @@ public class ECRawTest {
 
             System.out.println("------------- REQUEST ---------------------");
             ECRawPacket req = new ECRawPacket(clientStream);
-            ECPacket pReq = req.parse();
             
             System.out.println(req.dump());
             
@@ -38,7 +37,6 @@ public class ECRawTest {
             if (serverStream.available() > 0) {
                 System.out.println("------------- RESPONSE --------------");
                 ECRawPacket resp = new ECRawPacket(serverStream);
-                ECPacket pResp = resp.parse();
                 
                 System.out.println(resp.dump());
                 
