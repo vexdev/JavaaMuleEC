@@ -97,7 +97,6 @@ public class ECFakeTestServer {
             
         
         } catch (DataFormatException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         }
         
@@ -112,44 +111,44 @@ public class ECFakeTestServer {
         try {
             Thread.sleep(2000);
         } catch (InterruptedException e1) {
-            // TODO Auto-generated catch block
+
             e1.printStackTrace();
         }
         
         switch (epReq.getOpCode()) {
-        case ECPacket.EC_OP_GET_DLOAD_QUEUE:
+        case ECCodes.EC_OP_GET_DLOAD_QUEUE:
             epResp = generateDlQueuePacket();
             break;
             
-        case ECPacket.EC_OP_GET_DLOAD_QUEUE_DETAIL:
+        case ECCodes.EC_OP_GET_DLOAD_QUEUE_DETAIL:
             epResp = generateDlQueuePacketDetail(epReq);
             break;
             
-        case ECPacket.EC_OP_STAT_REQ:
+        case ECCodes.EC_OP_STAT_REQ:
             epResp = generateStatsPacket();
             break;
             
-        case ECPacket.EC_OP_PARTFILE_PAUSE:
-        case ECPacket.EC_OP_PARTFILE_RESUME:
-        case ECPacket.EC_OP_PARTFILE_DELETE:
-        case ECPacket.EC_OP_PARTFILE_SWAP_A4AF_THIS:
-        case ECPacket.EC_OP_PARTFILE_SWAP_A4AF_THIS_AUTO:
-        case ECPacket.EC_OP_PARTFILE_SWAP_A4AF_OTHERS:
+        case ECCodes.EC_OP_PARTFILE_PAUSE:
+        case ECCodes.EC_OP_PARTFILE_RESUME:
+        case ECCodes.EC_OP_PARTFILE_DELETE:
+        case ECCodes.EC_OP_PARTFILE_SWAP_A4AF_THIS:
+        case ECCodes.EC_OP_PARTFILE_SWAP_A4AF_THIS_AUTO:
+        case ECCodes.EC_OP_PARTFILE_SWAP_A4AF_OTHERS:
             epResp = doActionOnPartFile(epReq);
             break;
-        case ECPacket.EC_OP_PARTFILE_PRIO_SET:
+        case ECCodes.EC_OP_PARTFILE_PRIO_SET:
             epResp = changePartFilePrio(epReq);
             break;
-        case ECPacket.EC_OP_RENAME_FILE:
+        case ECCodes.EC_OP_RENAME_FILE:
             epResp = renamePartFile(epReq);
             break;
         default:
             epResp = new ECPacket();
-            epResp.setOpCode(ECPacket.EC_OP_FAILED);
+            epResp.setOpCode(ECCodes.EC_OP_FAILED);
             try {
                 epResp.addTag(new ECTag(ECTag.EC_TAG_STRING, ECTag.EC_TAGTYPE_STRING, "FAKE SERVER - Unknown op code received"));
             } catch (DataFormatException e) {
-                // TODO Auto-generated catch block
+
                 e.printStackTrace();
             }
             break;
@@ -159,12 +158,12 @@ public class ECFakeTestServer {
     
     private ECPacket generateStatsPacket() {
         ECPacket stats = new ECPacket();
-        stats.setOpCode(ECPacket.EC_OP_STATS);
+        stats.setOpCode(ECCodes.EC_OP_STATS);
         try {
             stats.addTag(new ECTag(ECTag.EC_TAG_STATS_DL_SPEED, ECTag.EC_TAGTYPE_UINT16, 100));
             stats.addTag(new ECTag(ECTag.EC_TAG_STATS_UL_SPEED, ECTag.EC_TAGTYPE_UINT16, 200));
         } catch (DataFormatException e) {
-            // TODO Auto-generated catch block
+
             e.printStackTrace();
         }
         
@@ -176,7 +175,7 @@ public class ECFakeTestServer {
     
     private ECPacket generateDlQueuePacket() {
         ECPacket dlQueue = new ECPacket();
-        dlQueue.setOpCode(ECPacket.EC_OP_DLOAD_QUEUE);
+        dlQueue.setOpCode(ECCodes.EC_OP_DLOAD_QUEUE);
         
         Iterator <ECTag> i = partFileList.values().iterator();
         while (i.hasNext()) {
@@ -197,12 +196,12 @@ public class ECFakeTestServer {
                 detail.setOpCode(ECTag.EC_OP_FAILED);
                 detail.addTag(new ECTag(ECTag.EC_TAG_STRING, ECTag.EC_TAGTYPE_STRING, "Invalid partfile requested"));
             } else {
-                detail.setOpCode(ECPacket.EC_OP_DLOAD_QUEUE);
+                detail.setOpCode(ECCodes.EC_OP_DLOAD_QUEUE);
                 detail.addTag(partFileList.get(ECUtils.byteArrayToHexString(hash)));
             }
             
         } catch (DataFormatException e1) {
-            // TODO Auto-generated catch block
+
             e1.printStackTrace();
         }
         return detail;
@@ -221,25 +220,25 @@ public class ECFakeTestServer {
             } else {
                 
                 switch (epReq.getOpCode()) {
-                case ECPacket.EC_OP_PARTFILE_PAUSE:
+                case ECCodes.EC_OP_PARTFILE_PAUSE:
                     t.getSubTagByName(ECTag.EC_TAG_PARTFILE_STATUS).setTagValueUInt(ECPartFile.PS_PAUSED);
                     t.getSubTagByName(ECTag.EC_TAG_PARTFILE_SPEED).setTagValueUInt(0);
                     t.getSubTagByName(ECTag.EC_TAG_PARTFILE_SOURCE_COUNT_XFER).setTagValueUInt(0);
                     break;
-                case ECPacket.EC_OP_PARTFILE_RESUME:
+                case ECCodes.EC_OP_PARTFILE_RESUME:
                     t.getSubTagByName(ECTag.EC_TAG_PARTFILE_STATUS).setTagValueUInt(ECPartFile.PS_READY);
                     t.getSubTagByName(ECTag.EC_TAG_PARTFILE_SPEED).setTagValueUInt(100);
                     t.getSubTagByName(ECTag.EC_TAG_PARTFILE_SOURCE_COUNT_XFER).setTagValueUInt(1);
                     break;
 
-                case ECPacket.EC_OP_PARTFILE_DELETE:
+                case ECCodes.EC_OP_PARTFILE_DELETE:
                     partFileList.remove(ECUtils.byteArrayToHexString(hash));
                     
-                case ECPacket.EC_OP_PARTFILE_SWAP_A4AF_THIS:
-                case ECPacket.EC_OP_PARTFILE_SWAP_A4AF_THIS_AUTO:
+                case ECCodes.EC_OP_PARTFILE_SWAP_A4AF_THIS:
+                case ECCodes.EC_OP_PARTFILE_SWAP_A4AF_THIS_AUTO:
                     t.getSubTagByName(ECTag.EC_TAG_PARTFILE_SOURCE_COUNT_A4AF).setTagValueUInt(0);
                     break;
-                case ECPacket.EC_OP_PARTFILE_SWAP_A4AF_OTHERS:
+                case ECCodes.EC_OP_PARTFILE_SWAP_A4AF_OTHERS:
                     t.getSubTagByName(ECTag.EC_TAG_PARTFILE_SOURCE_COUNT_A4AF).setTagValueUInt(1);
                     break;
                 }
@@ -249,7 +248,7 @@ public class ECFakeTestServer {
             }
             
         } catch (DataFormatException e1) {
-            // TODO Auto-generated catch block
+            
             e1.printStackTrace();
         }
         
@@ -272,7 +271,7 @@ public class ECFakeTestServer {
                 t.getSubTagByName(ECTag.EC_TAG_PARTFILE_PRIO).setTagValueUInt(epReq.getTagByName(ECTag.EC_TAG_PARTFILE).getSubTagByName(ECTag.EC_TAG_PARTFILE_PRIO).getTagValueUInt());
             }
         } catch (DataFormatException e1) {
-            // TODO Auto-generated catch block
+            
             e1.printStackTrace();
         }
         
@@ -295,7 +294,7 @@ public class ECFakeTestServer {
                 t.getSubTagByName(ECTag.EC_TAG_PARTFILE_NAME).setTagValueString(epReq.getTagByName(ECTag.EC_TAG_PARTFILE).getSubTagByName(ECTag.EC_TAG_PARTFILE_NAME).getTagValueString());
             }
         } catch (DataFormatException e1) {
-            // TODO Auto-generated catch block
+            
             e1.printStackTrace();
         }
         

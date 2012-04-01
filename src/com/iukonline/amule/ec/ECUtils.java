@@ -2,6 +2,7 @@ package com.iukonline.amule.ec;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.CharacterCodingException;
 
 public class ECUtils {
     
@@ -13,29 +14,35 @@ public class ECUtils {
             ret[MSB ? numBytes - 1 - i : i] = (byte)((uint & (mask << i * 8)) >> (i * 8));
         }
         
-        
         return ret;
     }
+    
     
     static long bytesToUint(byte[] input, int numBytes, boolean MSB) {
         return bytesToUint(input, numBytes, MSB, false);
     }
     
     static long bytesToUint(byte[] input, int numBytes, boolean MSB, boolean debug) {
+        return bytesToUint(input, 0, numBytes, MSB, false);
+    }
+    
+    static long bytesToUint(byte[] input, int offset, int numBytes, boolean MSB, boolean debug) {
+        
+        debug = false;
         
         if (debug)
-            System.out.println("-- bytesToUint: " + byteArrayToHexString(input, numBytes));
+            System.out.println("bytesToUint: converting " + numBytes + " bytes starting from " +offset + " - "+ byteArrayToHexString(input, numBytes, offset));
         
         long ret = 0x0L;
         
          
                         
         for (int i = 0; i < numBytes; i++) {
-            int index = MSB ? numBytes - 1 - i : i;
+            int index = offset + (MSB ? numBytes - 1 - i : i);
             if (debug) {
-                System.out.println("Byte      : " + byteArrayToHexString(input, 1, index));
-                System.out.println("Wrong Long: " + (long) input[index]);
-                System.out.print("Bit       :");
+                System.out.println("bytesToUint: Byte " + index + "     - " + byteArrayToHexString(input[index]));
+                System.out.println("bytesToUint: Wrong Long - " + (long) input[index]);
+                System.out.print("bytesToUint: Bit        -");
             }
             
             if (debug) {
@@ -55,10 +62,10 @@ public class ECUtils {
             }
             
             if (debug)
-                System.out.println("Partial result: " + ret);
+                System.out.println("bytesToUint: Partial result - " + ret);
         }
         if (debug)
-            System.out.println("Final result: " + ret);
+            System.out.println("bytesToUint: Final result - " + ret);
         
         return ret;
     }
@@ -107,65 +114,121 @@ public class ECUtils {
         return rslt;
     }    
     
-    public static void readAllBytes(InputStream in, byte[] buf, int offset, int len) throws IOException {
+    public static void readAllBytes(InputStream in, byte[] buf, int offset, int len, boolean debug) throws IOException {
         int remaining = (int) len;
         int pos = offset;
         int bytes = 0;
         
+        if (debug) System.out.println("readAllBytes: reading " + len + " bytes");
+        
         while (remaining > 0) {
+            if (debug) System.out.println("readAllBytes: " + remaining + " bytes remaining");
             bytes = in.read(buf, pos, remaining);
             if (bytes < 0) {
-                // TODO: gestire meglio
-                throw new IOException("0 bytes read");
+                throw new IOException("Unexpected end of input stream (" + remaining + " more bytes were expected)");
             } else {
                 remaining -= bytes;
                 pos += bytes;
-                //System.out.println("Read "+pos+"/"+len+" bytes");
             }
         }
+        if (debug) System.out.println("readAllBytes: done");
     }
     
-    public static void readAllBytes(InputStream in, byte[] buf, int offset, int len, boolean isUTF8Compressed) throws IOException {
+    
+    public static int getUTF8SequenceLength(byte firstByte, boolean debug) throws CharacterCodingException {
         
-        boolean debug = false;
+        //debug=false;
+        
+        if (debug) System.out.println("getUTF8SequenceLength: Evaulating length for first byte " + ECUtils.byteArrayToHexString(firstByte));
+        int bitShift = 7;
+        while (bitShift > 0 && (((int) (firstByte >> bitShift)) & 0x1) == 0x01) {
+            if (debug) System.out.println("getUTF8SequenceLength: Bit " + bitShift + " is set");
+            bitShift --;
+        }
+        if (bitShift == 0 || bitShift == 6) throw new CharacterCodingException();
+        
+        int bytesToBeRead = (bitShift == 7 ? 0 : 6 - bitShift);
+        if (debug) System.out.println("getUTF8SequenceLength: Sequence is " + (bytesToBeRead + 1) + " bytes long");
+        
+        return bytesToBeRead + 1;
+        
+    }
+    
+    public static long decodeUTF8number(byte[] sequence, int offset, boolean debug) throws CharacterCodingException {
+        
+        debug=false;
+        
+        int len = getUTF8SequenceLength(sequence[offset], debug);
+        
+        int bitShift = (len == 1 ? 7 : (7 - len)); 
+        
+        int decodedBitLen = (len - 1) * 6 + bitShift;
+        int decodedByteLen = bitShift % 8 == 0 ? bitShift / 8 : (bitShift / 8) + 1;
+
+        if (debug) System.out.println("decodeUTF8int: Encoded sequence is " + ECUtils.byteArrayToHexString(sequence, len, offset));
+        if (debug) System.out.println("decodeUTF8int: Decoded sequence will be " + decodedByteLen + " bytes long (" + decodedBitLen + " bits)");
+
+        long result = 0L;
+        
+        for (int i = 0; i < decodedBitLen; i++) {
+            int encodedByte = i < bitShift ? 0 : (((i - bitShift) / 6) + 1);
+            int encodedBit = encodedByte == 0 ? 8 - bitShift + i : ((i - bitShift) % 6 + 2);
+            
+            if (debug) System.out.println("decodeUTF8int: Decoding bit " + encodedBit + " of byte " + encodedByte + " - "+ ECUtils.byteArrayToHexString(sequence, 1, offset + encodedByte));
+            
+            if (encodedByte > 0 && ((sequence[offset + encodedByte] >> 6) & 0x3) != 0x2) throw new CharacterCodingException();
+
+            int bitValue = (sequence[offset + encodedByte] >> (7 - encodedBit)) & 0x01;
+            result |= bitValue << (decodedBitLen - i - 1);
+
+            if (debug) System.out.println("decodeUTF8int: Bit value is " + bitValue + ", partial result is " + result);
+        }
+        
+        return result;
+        
+        
+    }
+    
+    
+    /*
+    public static void readAllBytes(InputStream in, byte[] buf, int offset, int len, boolean isUTF8Compressed, boolean debug) {
         
         if (! isUTF8Compressed) {
-            readAllBytes(in, buf, offset, len);
+            readAllBytes(in, buf, offset, len, debug);
             return;
         }
 
         byte[] localBuf = new byte[8];
         int bytes = 0;
         bytes = in.read(localBuf, 0, 1);
-        if (bytes <= 0)  throw new IOException("0 bytes read"); // TODO: gestire meglio
+        if (debug) System.out.println("readAllBytes UTF-8: Got first byte - " + ECUtils.byteArrayToHexString(localBuf, 1));
+        if (bytes <= 0)  throw new IOException("Unexpected stream end (read 0/" + len + " bytes)"); // TODO: gestire meglio
         
         
-        if (debug) System.out.println("Decoding UTF-8 int...");
-        if (debug) System.out.println("First byte is " + byteArrayToHexString(localBuf, 1));
         int bitShift = 7;
         while (bitShift > 0 && (((int) (localBuf[0] >> bitShift)) & 0x1) == 0x01) {
-            if (debug) System.out.println("Bit " + bitShift + " is set");
+            if (debug) System.out.println("readAllBytes UTF-8: Bit " + bitShift + " is set");
             bitShift --;
         }
-        if (bitShift == 0 || bitShift == 6) throw new IOException("Invalid UTF-8 sequence");
+        if (bitShift == 0 || bitShift == 6) throw new IOException("Invalid UTF-8 sequence start " + ECUtils.byteArrayToHexString(localBuf[0]));
         
         int bytesToBeRead = (bitShift == 7 ? 0 : 6 - bitShift);
-        if (debug) System.out.println("Sequence is " + (bytesToBeRead + 1) + " bytes long");
+        if (debug) System.out.println("readAllBytes UTF-8: Sequence is " + (bytesToBeRead + 1) + " bytes long");
         
         int encodedBitLen = (bytesToBeRead + 1) * 8; 
         int decodedBitLen = bytesToBeRead * 6 + bitShift;
         int decodedByteLen = bitShift % 8 == 0 ? bitShift / 8 : (bitShift / 8) + 1;
         
-        if (debug) System.out.println("Decoded sequence is " + decodedByteLen + " bytes long (" + decodedBitLen + " bits)");
+        if (debug) System.out.println("readAllBytes UTF-8: Decoded sequence will be " + decodedByteLen + " bytes long (" + decodedBitLen + " bits)");
         
         if (decodedByteLen > len) throw new IOException("UTF-8 Sequence is longer than expected");
 
         if (bytesToBeRead > 0) {
-            if (debug) System.out.println("Reading following bytes...");
-            readAllBytes(in, localBuf, 1, bytesToBeRead);
+            if (debug) System.out.println("readAllBytes UTF-8: Reading further bytes...");
+            readAllBytes(in, localBuf, 1, bytesToBeRead, debug);
         }
 
-        if (debug) System.out.println("Sequence is " + byteArrayToHexString(localBuf, 1 + bytesToBeRead));
+        if (debug) System.out.println("readAllBytes UTF-8: Complete sequence is " + byteArrayToHexString(localBuf, 1 + bytesToBeRead));
         
         //TODO Check that following bytes start with 10
 
@@ -176,7 +239,7 @@ public class ECUtils {
             int bitHigh = (bitLow > 10 ? bitLow - 9 : bytesToBeRead + 1);
             int result = 0x0;
             
-            if (debug) System.out.println("Reading bits between " + bitHigh + " and " + bitLow);
+            if (debug) System.out.println("readAllBytes UTF-8: Reading bits between " + bitHigh + " and " + bitLow);
             
             int j = 0;
             for (int i = bitLow; i >= bitHigh; i--) {
@@ -186,7 +249,7 @@ public class ECUtils {
                     int targetByte = i / 8;
                     int targetBit = i % 8;
                     
-                    if (debug) System.out.print("Reading byte " + targetByte + " bit " + targetBit + ": " + (0x1 << j) + " x ");
+                    if (debug) System.out.print("readAllBytes UTF-8: Reading byte " + targetByte + " bit " + targetBit + ": " + (0x1 << j) + " x ");
                     
                     int bit = (((int) localBuf[targetByte]) >> (7 - targetBit)) & 0x1;
                     
@@ -203,7 +266,47 @@ public class ECUtils {
             buf[i] = (byte) 0x0;
         }
         
-        if (debug) System.out.println("FINAL DECODED SEQUENCE: " + ECUtils.byteArrayToHexString(buf, len));
+        if (debug) System.out.println("readAllBytes UTF-8: FINAL DECODED SEQUENCE - " + ECUtils.byteArrayToHexString(buf, len));
         
     }
+    */
+    
+    public static int UTF8Length(long number) throws CharacterCodingException {
+        // TODO Better handle exceptions
+        
+        if (number < 128L) {
+            return 1;
+        } else if (number < 2048L) {
+            return 2;
+        } else if (number < 262144L) {
+            return 3;
+        } else if (number < 2097152L) {
+            return 4;
+        } else {
+            throw new CharacterCodingException();
+        }
+    }
+
+    public static String hexDecode(byte[] value, int offset, int numBytes, String description, int hexPerRow, int indentSpaces) throws ECException {
+
+        //System.out.printf("offset: %d, numButes: %d, description: %s, hexPerRow: %d, indentSpaces: %d\n", offset, numBytes, description, hexPerRow, indentSpaces);
+        
+        if (value == null) throw new ECException("Trying to hexDump null payload");
+        if (numBytes < 0) throw new ECException("Trying to hexDump negative length (" + numBytes + ")");
+        if (offset >= value.length) throw new ECException("hexDump start (" + offset + ") is greater than payload length (" + value.length + ")");
+        if (offset + numBytes > value.length) throw new ECException("hexDump end (" + (offset + numBytes) + ") is outside payloadlength (" + value.length + ")");
+        
+        StringBuilder s = new StringBuilder();
+        
+        String rowFormat = "%-" + (hexPerRow * 3) + "s%" + (4 * indentSpaces + 1) + "s%s\n";
+        int hexDumpRows = numBytes % hexPerRow == 0 ? numBytes / hexPerRow : (numBytes / hexPerRow) + 1 ;
+        
+        for (int i = 0; i < hexDumpRows; i++) {
+            int thisRowHex = i == hexDumpRows - 1 ? numBytes - i * hexPerRow : hexPerRow;
+            s.append(String.format(rowFormat, byteArrayToHexString(value, thisRowHex, offset + i * hexPerRow), "", i == 0 ? description : ""));
+        }
+        return s.toString();
+    }
+
+
 }

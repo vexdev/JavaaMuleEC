@@ -1,13 +1,13 @@
 package com.iukonline.amule.ec;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
-import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.nio.charset.CharacterCodingException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.zip.DataFormatException;
+
+import com.iukonline.amule.ec.ECRawPacket.ECRawTag;
 
 
 
@@ -18,18 +18,22 @@ public class ECTag implements ECCodes, ECTagTypes {
     
     private int         nestingLevel = 0;
     
-    private String      tagValueString;
-    private long        tagValueUInt;
-    private InetAddress tagValueIPv4;  
-    private byte[]      tagValueHash;   
-    private byte[]      tagValueCustom;
+    private String            tagValueString;
+    private long              tagValueUInt;
+    private InetSocketAddress tagValueIPv4;  
+    private byte[]            tagValueHash;   
+    private byte[]            tagValueCustom;
+    private double            tagValueDouble;
     
     ArrayList<ECTag>    subTags;        // Note: this is not synchronized... Take care if used in multiple thread
+    
+    ECRawTag rawTag;
         
     public ECTag() {
         subTags = new ArrayList<ECTag>();
     }
     
+
     public ECTag(short tagName, byte tagType) throws DataFormatException {
         this();
         this.setTagName(tagName);
@@ -50,12 +54,12 @@ public class ECTag implements ECCodes, ECTagTypes {
         this(tagName, EC_TAGTYPE_STRING, tagValue);
     }
 
-    public ECTag(short tagName, byte tagType, InetAddress tagValue) throws DataFormatException {
+    public ECTag(short tagName, byte tagType, InetSocketAddress tagValue) throws DataFormatException {
         this(tagName, tagType);
         this.setTagValueIPv4(tagValue);
     }
 
-    public ECTag(short tagName, InetAddress tagValue) throws DataFormatException {
+    public ECTag(short tagName, InetSocketAddress tagValue) throws DataFormatException {
         this(tagName, EC_TAGTYPE_IPV4, tagValue);
     }
 
@@ -72,7 +76,6 @@ public class ECTag implements ECCodes, ECTagTypes {
             // TODO Raise Exception
             
         }
-            
     }
     
     public String getTagValueString() throws DataFormatException {
@@ -118,7 +121,7 @@ public class ECTag implements ECCodes, ECTagTypes {
 
     }
     
-    public InetAddress getTagValueIPv4() throws DataFormatException {
+    public InetSocketAddress getTagValueIPv4() throws DataFormatException {
         if (tagType == EC_TAGTYPE_IPV4) {
             return tagValueIPv4;
         } else {
@@ -126,7 +129,7 @@ public class ECTag implements ECCodes, ECTagTypes {
         }
     }
 
-    public void setTagValueIPv4(InetAddress tagValueIPv4) throws DataFormatException {
+    public void setTagValueIPv4(InetSocketAddress tagValueIPv4) throws DataFormatException {
         if (tagType == EC_TAGTYPE_IPV4) {
             this.tagValueIPv4 = tagValueIPv4;
         } else {
@@ -168,6 +171,23 @@ public class ECTag implements ECCodes, ECTagTypes {
 
     }
     
+    public void setTagValueDouble(double tagValueDouble) throws DataFormatException {
+        if (tagType == EC_TAGTYPE_DOUBLE) {
+            this.tagValueDouble = tagValueDouble;
+        } else {
+            throw new DataFormatException("Tag type is not DOUBLE");
+        }
+    }
+    
+    public double getTagValueDouble() throws DataFormatException {
+        if (tagType == EC_TAGTYPE_DOUBLE) {
+            return tagValueDouble;
+        } else {
+            throw new DataFormatException("Tag type is not DOUBLE");
+        }
+        
+    }
+    
     
     public int getTagName() {
         return tagName;
@@ -191,10 +211,9 @@ public class ECTag implements ECCodes, ECTagTypes {
         case EC_TAGTYPE_STRING:
         case EC_TAGTYPE_IPV4:
         case EC_TAGTYPE_HASH16:
+        case EC_TAGTYPE_DOUBLE:
             this.tagType = tagType;
             break;
-        case EC_TAGTYPE_DOUBLE:
-            throw new DataFormatException("Don't know how to handle tag type DOUBLE");
         default:
             throw new DataFormatException("Unknown tag type " + ECUtils.byteArrayToHexString(tagType));
         }
@@ -212,18 +231,7 @@ public class ECTag implements ECCodes, ECTagTypes {
     }
 
     public void addSubTag(ECTag subTag) {
-        subTag.setNestingLevel(nestingLevel + 1);
         this.subTags.add(subTag);
-    }
-    
-    private void setNestingLevel(int nestingLevel) {
-        this.nestingLevel = nestingLevel;
-        if (! subTags.isEmpty()) {
-            Iterator<ECTag> itr = subTags.iterator();
-            while(itr.hasNext()) {
-                itr.next().setNestingLevel(nestingLevel + 1);
-            }
-        }
     }
     
     public ECTag getSubTagByName(short tagName) {
@@ -239,12 +247,33 @@ public class ECTag implements ECCodes, ECTagTypes {
         return null;
     }
     
-    public long getLength(boolean withHeader) {
-        long len = withHeader ? 7 : 0; // ec_tagname_t - uint16, ec_tagtype_t - uint8, ec_tagtype_t - uint32
+    public long getLength(boolean withHeader, boolean isUTF8Compressed) throws ECException  {
+        
+        //long len = withHeader ? 7 : 0; // ec_tagname_t - uint16, ec_tagtype_t - uint8, ec_taglen_t - uint32
+        long len = 0L;
+        if (withHeader) {
+            if (!isUTF8Compressed) {
+                len += 7L;
+            } else {
+                try {
+                    len += ECUtils.UTF8Length(tagName << 1); // ec_tagname_t
+                } catch (CharacterCodingException e) {
+                    throw new ECException("Invlid tagName, not UTF-8 encodable: " + tagName, e);
+                } 
+                len += 1; // ec_tagtype_t
+                try {
+                    len += ECUtils.UTF8Length(getLength(false, isUTF8Compressed)); // ec_taglen_t
+                } catch (CharacterCodingException e) {
+                    throw new ECException("Invlid tag length, not UTF-8 encodable: " + len, e);
+                } 
+            }
+        }
         
         switch (tagType) {
         case EC_TAGTYPE_CUSTOM:
-            len += tagValueCustom.length;
+            if (tagValueCustom != null) {
+                len += tagValueCustom.length;
+            }
             break;
         case EC_TAGTYPE_UINT8:
             len += 1;
@@ -262,7 +291,7 @@ public class ECTag implements ECCodes, ECTagTypes {
             try {
                 len += tagValueString.getBytes("UTF-8").length + 1;
             } catch (UnsupportedEncodingException e) {
-                // THIS SHOULD NEVERE HAPPEN
+                throw new ECException("Severe error: UTF-8 not supported for string encoding", e);
             }
             break;
         case EC_TAGTYPE_DOUBLE:
@@ -279,245 +308,33 @@ public class ECTag implements ECCodes, ECTagTypes {
         }
         
         if (! subTags.isEmpty()) {
-            if (withHeader) len += 2; // Tag count
+            if (withHeader)
+                try {
+                    len += ECUtils.UTF8Length(subTags.size());
+                } catch (CharacterCodingException e) {
+                    throw new ECException("Invlid tag count, not UTF-8 encodable: " + len, e);
+                } 
 
             Iterator<ECTag> itr = subTags.iterator();
             while(itr.hasNext()) {
-                len += itr.next().getLength(true);
+                // TODO: VERIFY. It seems that packet len is computed as not comrpessed for subtags
+                 len += itr.next().getLength(true, isUTF8Compressed);
+                //len += itr.next().getLength(true, false);
             }
         }
         
         return len;
     }
     
-    public long getLength() {
-        return getLength(false);
+    public long getLength() throws ECException {
+        return getLength(false, false);
     }
-      
-    public void writeToStream(OutputStream out) throws IOException {
-        
-        out.write(ECUtils.uintToBytes(subTags.isEmpty() ? tagName << 1 : ((tagName << 1)| 0x1), 2, true)); // Last bit set to 1 if subtags are present
-        out.write(tagType);
-        out.write(ECUtils.uintToBytes(getLength(), 4, true));
 
-        if (! subTags.isEmpty()) {
-            out.write(ECUtils.uintToBytes(subTags.size(), 2, true));
-            
-            Iterator<ECTag> itr = subTags.iterator();
-            while(itr.hasNext()) {
-                itr.next().writeToStream(out);
-            }
-        }
 
-        switch (tagType) {
-        case EC_TAGTYPE_UINT8:
-            out.write(ECUtils.uintToBytes(tagValueUInt, 1, true));
-            break;
-        case EC_TAGTYPE_UINT16:
-            out.write(ECUtils.uintToBytes(tagValueUInt, 2, true));
-            break;
-        case EC_TAGTYPE_UINT32:
-            out.write(ECUtils.uintToBytes(tagValueUInt, 4, true));
-            break;
-        case EC_TAGTYPE_UINT64:
-            out.write(ECUtils.uintToBytes(tagValueUInt, 8, true));
-            break;
-        case EC_TAGTYPE_STRING:
-            out.write(tagValueString.getBytes("UTF-8"));
-            out.write((byte) 0x00);
-            break;
-        case EC_TAGTYPE_DOUBLE:            
-            // TODO Implement this. Today won't happen as DOUBLE trhows execption in set method
-            break;
-        case EC_TAGTYPE_IPV4:
-            out.write(tagValueIPv4.getAddress());
-            break;
-        case EC_TAGTYPE_HASH16:
-            out.write(tagValueHash);
-            break;
-        default:
-            // Don't need an exception. tagType has been checked in set method
-        }
-
-    }
     
-
-    public void readFromStream(InputStream in) throws IOException {
-        readFromStream(in, false);
-    }
     
-    public void readFromStream(InputStream in, boolean isUTF8Compressed) throws IOException {
-        
-        boolean debug = false;  // TODO remove debug...
-        
-        byte bufUint[] = new byte[8];
-        
-        int bytes = -1;
-
-        ECUtils.readAllBytes(in, bufUint, 0, 2, isUTF8Compressed);
-        //bytes = in.readAll(bufUint, 0, 2);
-
-        long tagName = ECUtils.bytesToUint(bufUint, 2, true);
-        if (debug) System.out.println("Found raw tag " + Long.toHexString(tagName));
-        boolean hasSubTags = (tagName & 0x1L) == 0x1L ? true : false;
-        tagName = (tagName & 0xfffffffffffffffeL) >> 1;
-        if (debug) System.out.println("Found tag " + Long.toHexString(tagName));
-        setTagName((short) tagName);
-        
-        try {
-            bytes = in.read();
-            if (bytes < 0) throw new IOException("Not all bytes were read. Expecting 1 read 0");
-            setTagType((byte) bytes);
-        } catch (DataFormatException e) {
-            throw new IOException("Error reading tag type - " + e.getMessage());
-        }
-        
-        if (debug) System.out.println("Found tag type " + ECUtils.byteArrayToHexString( new byte[] { tagType } ));
-        
-        //bytes = in.readAll(bufUint, 0, 4);
-        //if (bytes < 4) throw new IOException("Not all bytes were read. Expecting 4 read " + bytes);
-        ECUtils.readAllBytes(in, bufUint, 0, 4, isUTF8Compressed);
-        
-        long len = ECUtils.bytesToUint(bufUint, 4, true, debug);
-        long originalLength = len;
-        if (debug) System.out.println("----- Tag Length: " + len);
-        
-        if (hasSubTags) {
-            
-            if (debug) System.out.println("---------------------------------------- HAS SUBTAGS!!!! ------------");
-            
-            //bytes = in.readAll(bufUint, 0, 2);
-            //if (bytes < 2) throw new IOException("Not all bytes were read. Expecting 2 read " + bytes);
-            ECUtils.readAllBytes(in, bufUint, 0, 2, isUTF8Compressed);
-            int subTagCount = (int) ECUtils.bytesToUint(bufUint, 2, true);
-            
-            
-            for (int i = 0; i < subTagCount; i++) {
-                ECTag subTag = new ECTag();
-                subTag.readFromStream(in, isUTF8Compressed);
-                len -= subTag.getLength(true);
-                addSubTag(subTag);
-                if (debug) System.out.println("----- Remaining Tag Length: " + len);
-            }
-
-        }
-        
-        if (debug) System.out.println("----- Reading " + len + " bytes...");
-        
-        byte[] buf = new byte[(int) len];
-        
-        
-        if (len > 0) {
-            //bytes = in.readAll(buf, 0, (int) len);
-            //if (bytes < len) throw new IOException("Not all bytes were read Expecting " + len + " read " + bytes);
-            ECUtils.readAllBytes(in, buf, 0, (int)len);
-        }
-        
-        
-        
-        /*int remaining = (int) len;
-        int pos = 0;
-        
-        while (remaining > 0) {
-            bytes = in.read(buf, pos, remaining);
-            if (bytes < 0) {
-                throw new IOException("0 bytes read");
-            } else {
-                remaining -= bytes;
-                pos += bytes;
-            }
-        }*/
-        
-        
-        
-        try {
-            switch (tagType) {
-            case EC_TAGTYPE_CUSTOM:
-                if (debug) System.out.println("TYPE: CUSTOM");
-                setTagValueCustom(buf);
-                break;
-            case EC_TAGTYPE_UINT8:
-                if (debug) System.out.println("TYPE: UINT8");
-                if (len == 0)
-                    this.setTagValueUInt(0);                    
-                else if (len != 1)
-                    throw new IOException("Wrong length for UINT8 tag (" + len + ")");
-                else
-                    this.setTagValueUInt(ECUtils.bytesToUint(buf, (int) len, true));            
-                break;
-            case EC_TAGTYPE_UINT16:
-                if (debug) System.out.println("TYPE: UINT16");
-                if (len != 2)
-                    throw new IOException("Wrong length for UINT8 tag (" + len + ")");
-                else
-                    this.setTagValueUInt(ECUtils.bytesToUint(buf, (int) len, true));            
-                break;
-            case EC_TAGTYPE_UINT32:
-                if (debug) System.out.println("TYPE: UINT32");
-                if (len != 4)
-                    throw new IOException("Wrong length for UINT8 tag (" + len + ")");
-                else
-                    this.setTagValueUInt(ECUtils.bytesToUint(buf, (int) len, true));            
-                break;
-            case EC_TAGTYPE_UINT64:
-                if (debug) System.out.println("TYPE: UINT64");
-                if (len != 8)
-                    throw new IOException("Wrong length for UINT8 tag (" + len + ")");
-                else
-                    this.setTagValueUInt(ECUtils.bytesToUint(buf, (int) len, true));            
-                break;
-            case EC_TAGTYPE_STRING:
-                if (debug) System.out.println("TYPE: STRING - LENGTH " + Long.toString(len));
-                if (debug) System.out.println(buf);
-                if (debug) System.out.println(new String(buf, 0, (int) len - 1, "UTF-8"));
-                
-                if (buf[buf.length - 1] != 0x00)
-                    throw new IOException("String is not terminated with 00... Wrong length?");
-                else
-                    this.setTagValueString(new String(buf, 0, (int) len - 1, "UTF-8"));
-                
-                if (debug) System.out.println(this.getTagValueString());
-                if (debug) System.out.println("LEN IN PACKET: " + len);
-                if (debug) System.out.println("LEN IN STRING: " + this.getTagValueString().getBytes("UTF-8").length);
-                
-                break;
-                
-            case EC_TAGTYPE_DOUBLE:
-                if (debug) System.out.println("TYPE: DOUBLE");
-                // TODO Handle doubles
-                throw new IOException("HELP: NON SO GESTIRE I DOUBLE!!!");
-                //break;
-            case EC_TAGTYPE_IPV4:
-                if (debug) System.out.println("TYPE: IPV4");
-                if (len != 4)
-                    throw new IOException("Wrong length for IPV4 (" + len + ")");
-                else
-                    this.setTagValueIPv4(InetAddress.getByAddress(buf));
-                break;
-            case EC_TAGTYPE_HASH16:
-                if (debug) System.out.println("TYPE: HASH16");
-                if (len != 16)
-                    throw new IOException("Wrong length for HASH16 (" + len + ")");
-                else
-                    setTagValueHash(buf);
-                break;
-            default:
-                // TODO Raise exception
-            }
-        } catch (IOException e) {
-            throw e;
-        } catch (DataFormatException e) {
-            throw new IOException("Severe error. This shouldn't happen here - " + e.getMessage());
-        }
-        
-        if (debug) System.out.println("Final tag:\n" + toString());
-        if (originalLength != this.getLength()) 
-            throw new IOException(
-               "Tag len on packet (" + originalLength + ") is not the same as calculated one ( " + this.getLength() + ")");
-        
-
-    }
-
+    
+    
     @Override
     public String toString() {
         
@@ -579,7 +396,6 @@ public class ECTag implements ECCodes, ECTagTypes {
         }
                 
         out.append(indent + "Tag Type: <" + type + ">\n");
-        out.append(indent + "Tag Length: <" + this.getLength() + ">\n");
         
         
         if (! this.subTags.isEmpty()) {            
@@ -593,5 +409,8 @@ public class ECTag implements ECCodes, ECTagTypes {
         out.append(indent + "Tag Value: <" + value + ">\n");
         return out.toString();
     }    
+
+    
+    
     
 }

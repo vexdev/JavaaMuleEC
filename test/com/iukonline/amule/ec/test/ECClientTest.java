@@ -53,7 +53,7 @@ public class ECClientTest {
         socket = new Socket("***REMOVED***", 4712);
         cl.setSocket(socket);
         
-        cl.enableUTF8Compression();
+        //cl.enableUTF8Compression();
     }
 
     /**
@@ -86,14 +86,17 @@ public class ECClientTest {
         
         if (dlQueue != null) {
             for (int i = 0; i < dlQueue.length; i++) {
+                
+                ECPartFile d = cl.getDownloadDetails(dlQueue[i]);
+                
                 System.out.format("Filename: %s\nHash: %s\nStatus: %d - Done: %d/%d - Speed: %d - Prio: %d\n\n", 
-                                dlQueue[i].getFileName(), 
-                                ECUtils.byteArrayToHexString(dlQueue[i].getHash(), 16),
-                                dlQueue[i].getStatus(),
-                                dlQueue[i].getSizeDone(), 
-                                dlQueue[i].getSizeFull(),
-                                dlQueue[i].getSpeed(),
-                                dlQueue[i].getPrio()
+                                d.getFileName(), 
+                                ECUtils.byteArrayToHexString(d.getHash(), 16),
+                                d.getStatus(),
+                                d.getSizeDone(), 
+                                d.getSizeFull(),
+                                d.getSpeed(),
+                                d.getPrio()
                                 );
             }
         }

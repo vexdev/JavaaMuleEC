@@ -10,7 +10,7 @@ public class ECFakeTestClient extends ECClient {
     public ECPacket sendRequestAndWaitResponse(ECPacket epReq, boolean tryLogin) throws IOException, ECException {
         ECPacket epResp = server.parseRequestAndGenerateResponde(epReq);
         
-        if ((epResp.getOpCode() == ECPacket.EC_OP_FAILED) || (tryLogin && epResp.getOpCode() == ECPacket.EC_OP_AUTH_FAIL)) {
+        if ((epResp.getOpCode() == ECCodes.EC_OP_FAILED) || (tryLogin && epResp.getOpCode() == ECCodes.EC_OP_AUTH_FAIL)) {
             String errMsg = "No error returned.";
             ECTag tagError = epResp.getTagByName((short) ECTag.EC_TAG_STRING);
             if (tagError != null) {
@@ -21,7 +21,7 @@ public class ECFakeTestClient extends ECClient {
                 }
             }
             
-            if (tryLogin && epResp.getOpCode() == ECPacket.EC_OP_AUTH_FAIL) {
+            if (tryLogin && epResp.getOpCode() == ECCodes.EC_OP_AUTH_FAIL) {
                 boolean result = false;
 
                 try {

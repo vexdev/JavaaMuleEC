@@ -1,74 +1,60 @@
 package com.iukonline.amule.ec;
 
-import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.Formatter;
 import java.util.Iterator;
+import java.util.zip.DataFormatException;
 
 
 
-public class ECPacket implements ECCodes, ECTagTypes {
+public class ECPacket {
     
-    private final static int ECPACKET_HANDLED_FLAGS = 0x20 | EC_FLAG_ACCEPTS;
     
-    private int transmissionFlags = 0x20 | EC_FLAG_ACCEPTS;
-    private int accepts = 0x20;
-    
-    private byte opCode = EC_OP_NOOP;
+    private byte opCode = ECCodes.EC_OP_NOOP;
     private ArrayList<ECTag> tags;
     
-    private long len = -1;
+    
+    
+    // Default values;
+    private boolean isUTF8Compressed = false;
+    private boolean isZlibCompressed = false;
+    private boolean hasId = false;
+    private boolean acceptsUTF8 = true;
+    private boolean acceptsZlib = true;
+    
+    
+    private ECRawPacket encodedPacket;
     
     public ECPacket() {
         tags = new ArrayList<ECTag>();
     }
     
-    public int getTransmissionFlags() {
-        return transmissionFlags;
-    }
+    public void setUTF8Compressed(boolean isUTF8Compressed) { this.isUTF8Compressed = isUTF8Compressed; }
+    public boolean isUTF8Compressed() { return isUTF8Compressed; }
+   
+    public boolean isZlibCompressed() { return isZlibCompressed; }
+    public void setZlibCompressed(boolean isZlibCompressed) { this.isZlibCompressed = isZlibCompressed; }
 
-    public void setTransmissionFlags(int transmissionFlags) {
-        this.transmissionFlags = transmissionFlags;
-    }
+    public boolean hasId() { return hasId; }
+    public void setHasId(boolean hasId) { this.hasId = hasId; }
 
-    public int getAccepts() {
-        return accepts;
-    }
+    public boolean acceptsUTF8() { return acceptsUTF8; }
+    public void setAcceptsUTF8(boolean acceptsUTF8) { this.acceptsUTF8 = acceptsUTF8; }
 
-    public void setAccepts(int accepts) {
-        this.accepts = accepts;
-    }
-    
-    public void addAccepts(int accepts) {
-        this.accepts |= accepts;
-    }
+    public boolean acceptsZlib() { return acceptsZlib; }
+    public void setAcceptsZlib(boolean acceptsZlib) { this.acceptsZlib = acceptsZlib; }
 
-    public byte getOpCode() {
-        return opCode;
-    }
+    public byte getOpCode() { return opCode; }
+    public void setOpCode(byte opCode) { this.opCode = opCode; }
     
-    public void setOpCode(byte opCode) {
-        this.opCode = opCode;
-    }
+    public void addTag(ECTag tag) { tags.add(tag); }
     
-    public void addTag(ECTag tag) {
-        tags.add(tag);
-    }
-    
-    public ArrayList<ECTag> getTags() {
-        return tags;
-    }
+    public ArrayList<ECTag> getTags() { return tags; }
 
-    public boolean hasAccetps() {
-        return (transmissionFlags & EC_FLAG_ACCEPTS) == EC_FLAG_ACCEPTS;
-    }
-    
-    public boolean isUTF8Compressed() {
-        return (transmissionFlags & EC_FLAG_UTF8_NUMBERS) == EC_FLAG_UTF8_NUMBERS;
-    }
-    
+
     public ECTag getTagByName(short tagName) {
         if (! tags.isEmpty()) {            
             Iterator<ECTag> itr = tags.iterator();
@@ -83,147 +69,44 @@ public class ECPacket implements ECCodes, ECTagTypes {
     }
     
 
-    
-    
-    public void writeToStream(OutputStream out) throws IOException {
-        
-        BufferedOutputStream bout = new BufferedOutputStream(out);
-        
-        //out.write(uintToBytes(transmissionFlags, 4, true));
-        
-        bout.write(ECUtils.uintToBytes(transmissionFlags, 4, true));
-        if (this.hasAccetps()) {
-            bout.write(ECUtils.uintToBytes(accepts, 4, true));
-        }
-        
-        bout.write(ECUtils.uintToBytes(getLength(), 4, true));
-        bout.write(opCode);        
-		bout.write(ECUtils.uintToBytes(tags.size(), 2, true));
-		
-        if (! tags.isEmpty()) {            
-            
-            Iterator<ECTag> itr = tags.iterator();
-            while(itr.hasNext()) {
-                itr.next().writeToStream(bout);
-            }
-        }
-        
-        bout.flush();
+    public void writeToStream(OutputStream out) throws IOException, ECException  {
+        encodedPacket = new ECRawPacket(this);
+        out.write(encodedPacket.asByteArray());
     }
     
-    private boolean parseTrasmissionFlags(int flags) {
-        return (flags & ECPACKET_HANDLED_FLAGS) == flags;
+    public static ECPacket readFromStream(InputStream in) throws IOException, ECException, DataFormatException {
+        ECRawPacket raw = new ECRawPacket(in);
+        ECPacket n = raw.parse();
+        n.encodedPacket = raw;
+        return n;
     }
     
-    public void readFromStream(InputStream in) throws IOException {
-        boolean debug = false;
-        
-        byte bufUint[] = new byte[8];
-        
-        in.read(bufUint, 0, 4);
-        int trFlags = (int) ECUtils.bytesToUint(bufUint, 4, true);
-        if (! parseTrasmissionFlags(trFlags)) {
-            // TODO Raise exception
-        }
-        setTransmissionFlags(trFlags);
-
-        if (hasAccetps()) {
-            in.read(bufUint, 0, 4);
-            int accepts = (int) ECUtils.bytesToUint(bufUint, 4, true);
-            // No need to parse accepts
-            setAccepts(accepts);
-        }
-        
-        ECUtils.readAllBytes(in, bufUint, 0, 4, false); // Len is never UTF-8 compressed
-        //in.read(bufUint, 0, 4);
-        len = ECUtils.bytesToUint(bufUint, 4, true, debug);
-        if (debug) System.out.println("----- Packet Length: " + len);
-        
-        if (len < 3) {
-            // TODO Gestire meglio
-            throw new IOException("Invalid packet length " + len);
-        }
-        
-        
-        
-        
-        
-        //setOpCode((byte) in.read());
-        //in.read(bufUint, 0, 2);
-        
-        ECUtils.readAllBytes(in, bufUint, 0, 1);
-        setOpCode((byte) bufUint[0]);
-        ECUtils.readAllBytes(in, bufUint, 0, 2, isUTF8Compressed());
-        len -= 3;
-        
-        int tagCount = (int) ECUtils.bytesToUint(bufUint, 2, true);
-        
-        if (debug) System.out.println("--- Packet contains " + tagCount + " tags");
-        
-        for (int i = 0; i < tagCount; i++) {
-            
-            if (debug) System.out.println("--- Fetching tag " + i);
-            
-            ECTag tag = new ECTag();
-            try {
-                tag.readFromStream(in, isUTF8Compressed());
-            } catch (IOException e) {
-                // Let's save what we read anyway
-                addTag(tag);
-                throw e;
-            }
-            addTag(tag);
-            len -= tag.getLength(true);
-            if (len < 0) {
-                // TODO Gestire meglio
-                // TODO Rimosso per problema lettura UTF-8
-                // throw new IOException("Tags exceed packet length " + len);
-            }
-        }
-        
-        if (len != 0) {
-            // TODO Gestire meglio
-         // TODO Rimosso per problema lettura UTF-8
-            // throw new IOException("After tag parsing " + len + " more bytes should be present");
-        }
-        
-    }
     
-    public long getLength() {
-        long len = 3; // 1 opcode + 2 tag count;
-
-        if (! tags.isEmpty()) {            
-            Iterator<ECTag> itr = tags.iterator();
-            while(itr.hasNext()) {
-                len += itr.next().getLength(true);
-            }
-        }
-        
-        return len;
-    }
-
+    
     @Override
     public String toString() {
-        StringBuffer out = new StringBuffer("Transmission flags: <" + Integer.toHexString(transmissionFlags) + ">\n");
+
+
         
-        if (hasAccetps()) {
-            out.append("Accepts: <" + Integer.toHexString(accepts) + ">\n");
-        }
-        out.append("Length: <" + this.getLength() + ">\n");
-        if (len >= 0) {
-            out.append("Length in packet: <" + len + ">\n");
-        }
+        StringBuilder out = new StringBuilder();
+        Formatter f = new Formatter(out);
+        
+        f.format("isUTF8Compressed: %s, isZlibCompressed: %s, hasId: %s, acceptsUTF8: %s, acceptsZlib: %s\n", isUTF8Compressed, isZlibCompressed, hasId, acceptsUTF8, acceptsZlib); 
         out.append("OP Code: <" + Integer.toHexString(opCode) + ">\n");
-        if (! tags.isEmpty()) {            
+        
+        if (! tags.isEmpty()) {           
             Iterator<ECTag> itr = tags.iterator();
             while(itr.hasNext()) {
-                out.append(itr.next().toString());
+                    out.append(itr.next().toString());
             }
+        }
+        
+        if (encodedPacket != null) {
+            out.append("Encoded packet\n");
+            out.append(encodedPacket.dump());
         }
         
         return out.toString();
-
     }
-    
     
 }

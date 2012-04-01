@@ -278,43 +278,43 @@ public class ECPartFile {
     
 
 
-    public void pause() throws ECException, IOException {
-        client.changeDownloadStatus(hash, ECPacket.EC_OP_PARTFILE_PAUSE);
+    public void pause() throws ECException, IOException, DataFormatException {
+        client.changeDownloadStatus(hash, ECCodes.EC_OP_PARTFILE_PAUSE);
     }
     
-    public void resume() throws ECException, IOException {
-        client.changeDownloadStatus(hash, ECPacket.EC_OP_PARTFILE_RESUME); 
+    public void resume() throws ECException, IOException, DataFormatException {
+        client.changeDownloadStatus(hash, ECCodes.EC_OP_PARTFILE_RESUME); 
     }    
     
-    public void rename(String newName) throws ECException, IOException {
+    public void rename(String newName) throws ECException, IOException, DataFormatException {
         client.renameDownload(hash, newName);
     }
     
-    public void remove() throws ECException, IOException {
-        client.changeDownloadStatus(hash, ECPacket.EC_OP_PARTFILE_DELETE);
+    public void remove() throws ECException, IOException, DataFormatException {
+        client.changeDownloadStatus(hash, ECCodes.EC_OP_PARTFILE_DELETE);
     }
     
-    public void swapA4AFThis() throws ECException, IOException {
-        client.changeDownloadStatus(hash, ECPacket.EC_OP_PARTFILE_SWAP_A4AF_THIS);
+    public void swapA4AFThis() throws ECException, IOException, DataFormatException {
+        client.changeDownloadStatus(hash, ECCodes.EC_OP_PARTFILE_SWAP_A4AF_THIS);
     }
     
-    public void swapA4AFThisAuto() throws ECException, IOException {
-        client.changeDownloadStatus(hash, ECPacket.EC_OP_PARTFILE_SWAP_A4AF_THIS_AUTO);
+    public void swapA4AFThisAuto() throws ECException, IOException, DataFormatException {
+        client.changeDownloadStatus(hash, ECCodes.EC_OP_PARTFILE_SWAP_A4AF_THIS_AUTO);
     }
     
-    public void swapA4AFOthers() throws ECException, IOException {
-        client.changeDownloadStatus(hash, ECPacket.EC_OP_PARTFILE_SWAP_A4AF_OTHERS);
+    public void swapA4AFOthers() throws ECException, IOException, DataFormatException {
+        client.changeDownloadStatus(hash, ECCodes.EC_OP_PARTFILE_SWAP_A4AF_OTHERS);
     }
     
-    public void changePriority(byte prio) throws ECException, IOException {
+    public void changePriority(byte prio) throws ECException, IOException, DataFormatException {
         client.setDownloadPriority(hash, prio);
     }
     
-    public void refresh() throws ECException, IOException {
+    public void refresh() throws ECException, IOException, DataFormatException {
         refresh(hasDetail);
     }
     
-    public void refresh(boolean getDetail) throws ECException, IOException {
+    public void refresh(boolean getDetail) throws ECException, IOException, DataFormatException {
         if (getDetail) {
             client.getDownloadDetails(this);
         } else {
@@ -322,7 +322,7 @@ public class ECPartFile {
         }
     }
     
-    public void getDetails() throws ECException, IOException {
+    public void getDetails() throws ECException, IOException, DataFormatException {
         refresh(true);
         hasDetail = true;
     }

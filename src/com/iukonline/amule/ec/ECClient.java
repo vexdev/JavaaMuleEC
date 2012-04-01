@@ -23,12 +23,6 @@ public class ECClient {
     private Socket socket;
     private PrintStream tracer;
     
-    private boolean useUTF8Compression = false;
-    
-    public void enableUTF8Compression() {
-        useUTF8Compression = true;
-    }
-    
     public void setClientName(String clientName) {
         this.clientName = clientName;
     }
@@ -55,24 +49,29 @@ public class ECClient {
         this.tracer = tracer;
     }
     
-    public ECPacket sendRequestAndWaitResponse(ECPacket epReq, boolean tryLogin) throws IOException, ECException {
-        ECPacket epResp = new ECPacket();
-        
-        if (useUTF8Compression) epReq.addAccepts(ECCodes.EC_FLAG_UTF8_NUMBERS);
+    public ECPacket sendRequestAndWaitResponse(ECPacket epReq, boolean tryLogin) throws IOException, ECException, DataFormatException {
+
+
         
         OutputStream os = socket.getOutputStream();
         if (tracer != null) {
             tracer.print("Sending EC packet...\n" + epReq.toString() + "\n\n");
         }
         epReq.writeToStream(os);
+        if (tracer != null) {
+            tracer.print("Sent EC packet...\n" + epReq.toString() + "\n\n");
+        }
+
         BufferedInputStream is = new BufferedInputStream(socket.getInputStream());
-        epResp.readFromStream(is);
+        ECPacket epResp = ECPacket.readFromStream(is);
         
         if (tracer != null) {
             tracer.print("Received EC packet...\n" + epResp.toString() + "\n\n");
         }
         
-        if ((epResp.getOpCode() == ECPacket.EC_OP_FAILED) || (tryLogin && epResp.getOpCode() == ECPacket.EC_OP_AUTH_FAIL)) {
+        if ((epResp.getOpCode() == ECCodes.EC_OP_FAILED) || (tryLogin && epResp.getOpCode() == ECCodes.EC_OP_AUTH_FAIL)) {
+            
+            
             String errMsg = "No error returned.";
             ECTag tagError = epResp.getTagByName((short) ECTag.EC_TAG_STRING);
             if (tagError != null) {
@@ -82,16 +81,10 @@ public class ECClient {
                     throw new ECException("Cannot read returned error message", epResp, e);
                 }
             }
-            
-            if (tryLogin && epResp.getOpCode() == ECPacket.EC_OP_AUTH_FAIL) {
+            if (tryLogin && epResp.getOpCode() == ECCodes.EC_OP_AUTH_FAIL) {
                 boolean result = false;
 
-                try {
-                    result = this.login();
-                } catch (Exception e) {
-                    // Catch any exception. If login fails, the original error must be returned, not this new one.
-                }
-                
+                result = this.login();
                 if (result) {
                     return this.sendRequestAndWaitResponse(epReq, false);
                 }
@@ -104,15 +97,15 @@ public class ECClient {
 
     }
     
-    public ECPacket sendRequestAndWaitResponse(ECPacket epReq) throws IOException, ECException {
+    public ECPacket sendRequestAndWaitResponse(ECPacket epReq) throws IOException, ECException, DataFormatException {
         return sendRequestAndWaitResponse(epReq, true);
     }
 
-    public boolean login() throws IOException, ECException {
+    public boolean login() throws IOException, ECException, DataFormatException {
+        
         
         ECPacket epReq = new ECPacket();
-        epReq.setOpCode(ECPacket.EC_OP_AUTH_REQ);
-        
+        epReq.setOpCode(ECCodes.EC_OP_AUTH_REQ);
         try {
             epReq.addTag(new ECTag(ECTag.EC_TAG_CLIENT_NAME, clientName));
             epReq.addTag(new ECTag(ECTag.EC_TAG_CLIENT_VERSION, clientVersion));
@@ -123,21 +116,20 @@ public class ECClient {
         }
         
         ECPacket epResp = sendRequestAndWaitResponse(epReq, false);
-
         switch (epResp.getOpCode()) {
-        case ECPacket.EC_OP_AUTH_OK:
+        case ECCodes.EC_OP_AUTH_OK:
             // TODO Save server version
             return true;
-        case ECPacket.EC_OP_AUTH_FAIL:
+        case ECCodes.EC_OP_AUTH_FAIL:
             return false;
         default:
             throw new ECException("Unexpected response to login request", epResp);
         }
     }
     
-    public void addED2KURL(String url) throws ECException, IOException {
+    public void addED2KURL(String url) throws ECException, IOException, DataFormatException {
         ECPacket epReq = new ECPacket();
-        epReq.setOpCode(ECPacket.EC_OP_ADD_LINK);
+        epReq.setOpCode(ECCodes.EC_OP_ADD_LINK);
         try {
             epReq.addTag(new ECTag(ECTag.EC_TAG_PARTFILE_ED2K_LINK, ECTag.EC_TAGTYPE_STRING, url));
         } catch (DataFormatException e) {
@@ -145,7 +137,7 @@ public class ECClient {
         }
         ECPacket epResp = sendRequestAndWaitResponse(epReq);
         switch (epResp.getOpCode()) {
-        case ECPacket.EC_OP_NOOP:
+        case ECCodes.EC_OP_NOOP:
             // TODO Do something?
             return;
         default:
@@ -153,25 +145,25 @@ public class ECClient {
         }
     }
     
-    public ECPartFile[] getDownloadQueue() throws ECException, IOException {
+    public ECPartFile[] getDownloadQueue() throws ECException, IOException, DataFormatException {
         return getDownloadQueue(null, null);
     }
     
-    public ECPartFile getDownloadQueueItem(byte[] hash) throws ECException, IOException {
+    public ECPartFile getDownloadQueueItem(byte[] hash) throws ECException, IOException, DataFormatException {
         ECPartFile[] list = getDownloadQueue(hash, null);
         return list.length > 0 ? list[0] : null;
     }
     
-    public ECPartFile getDownloadQueueItem(ECPartFile p) throws ECException, IOException {
+    public ECPartFile getDownloadQueueItem(ECPartFile p) throws ECException, IOException, DataFormatException {
         ECPartFile[] list = getDownloadQueue(p.getHash(), null);
         return list.length > 0 ? list[0] : null;
     }
     
     
-    private ECPartFile[] getDownloadQueue(byte[] hash, ECPartFile p) throws ECException, IOException {
+    private ECPartFile[] getDownloadQueue(byte[] hash, ECPartFile p) throws ECException, IOException, DataFormatException {
         
         ECPacket epReq = new ECPacket();
-        epReq.setOpCode(ECPacket.EC_OP_GET_DLOAD_QUEUE);
+        epReq.setOpCode(ECCodes.EC_OP_GET_DLOAD_QUEUE);
         if (hash != null) {
             try {
                 epReq.addTag(new ECTag(ECTag.EC_TAG_PARTFILE, ECTag.EC_TAGTYPE_HASH16, hash ));
@@ -183,7 +175,7 @@ public class ECClient {
         ECPacket epResp = sendRequestAndWaitResponse(epReq);
         
         switch (epResp.getOpCode()) {
-        case ECPacket.EC_OP_DLOAD_QUEUE:
+        case ECCodes.EC_OP_DLOAD_QUEUE:
             // Do Something
    
             ArrayList<ECTag> tags = epResp.getTags();
@@ -224,18 +216,18 @@ public class ECClient {
         }        
     }
     
-    public ECPartFile getDownloadDetails(ECPartFile p) throws IOException, ECException {
+    public ECPartFile getDownloadDetails(ECPartFile p) throws IOException, ECException, DataFormatException {
         return getDownloadDetails(p.getHash(), p);
     }
     
-    public ECPartFile getDownloadDetails(byte[] hash) throws IOException, ECException {
+    public ECPartFile getDownloadDetails(byte[] hash) throws IOException, ECException, DataFormatException {
         return getDownloadDetails(hash, null);
     }
     
-    public ECPartFile getDownloadDetails(byte[] hash, ECPartFile p) throws IOException, ECException {
+    public ECPartFile getDownloadDetails(byte[] hash, ECPartFile p) throws IOException, ECException, DataFormatException {
 
         ECPacket epReq = new ECPacket();
-        epReq.setOpCode(ECPacket.EC_OP_GET_DLOAD_QUEUE_DETAIL);
+        epReq.setOpCode(ECCodes.EC_OP_GET_DLOAD_QUEUE_DETAIL);
         try {
             epReq.addTag(new ECTag(ECTag.EC_TAG_PARTFILE, ECTag.EC_TAGTYPE_HASH16, hash));
         } catch (DataFormatException e) {
@@ -244,15 +236,15 @@ public class ECClient {
         
         ECPacket epResp = sendRequestAndWaitResponse(epReq);
         switch (epResp.getOpCode()) {
-        case ECPacket.EC_OP_DLOAD_QUEUE:
+        case ECCodes.EC_OP_DLOAD_QUEUE:
             
             ECPartFile dl;
             try {
                 if (p != null) {
-                    p.fillFromTag(epResp.getTagByName(ECPacket.EC_TAG_PARTFILE));
+                    p.fillFromTag(epResp.getTagByName(ECCodes.EC_TAG_PARTFILE));
                     dl = p;
                 } else {
-                    dl = new ECPartFile(epResp.getTagByName(ECPacket.EC_TAG_PARTFILE));
+                    dl = new ECPartFile(epResp.getTagByName(ECCodes.EC_TAG_PARTFILE));
                 }
             } catch (DataFormatException e) {
                 throw new ECException("Unexpected response download queue request", epResp);
@@ -267,14 +259,14 @@ public class ECClient {
 
     }
     
-    public ECStats getStats() throws ECException, IOException {
+    public ECStats getStats() throws ECException, IOException, DataFormatException {
         
         ECPacket epReq = new ECPacket();
-        epReq.setOpCode(ECPacket.EC_OP_STAT_REQ);
+        epReq.setOpCode(ECCodes.EC_OP_STAT_REQ);
         
         ECPacket epResp = sendRequestAndWaitResponse(epReq);
         switch (epResp.getOpCode()) {
-        case ECPacket.EC_OP_STATS:
+        case ECCodes.EC_OP_STATS:
             
             ECStats stats = new ECStats();
             try {
@@ -291,7 +283,7 @@ public class ECClient {
         
     }
     
-    void changeDownloadStatus(byte[] hash, byte opCode) throws ECException, IOException {
+    void changeDownloadStatus(byte[] hash, byte opCode) throws ECException, IOException, DataFormatException {
 
         
         ECPacket epReq = new ECPacket();
@@ -306,7 +298,7 @@ public class ECClient {
         
         ECPacket epResp = sendRequestAndWaitResponse(epReq);
         switch (epResp.getOpCode()) {
-        case ECPacket.EC_OP_NOOP:
+        case ECCodes.EC_OP_NOOP:
             // TODO Do something?
             return;
         default:
@@ -315,9 +307,9 @@ public class ECClient {
         
     }
     
-    public void renameDownload(byte[] hash, String newName) throws ECException, IOException {
+    public void renameDownload(byte[] hash, String newName) throws ECException, IOException, DataFormatException {
         ECPacket epReq = new ECPacket();
-        epReq.setOpCode(ECPacket.EC_OP_RENAME_FILE);
+        epReq.setOpCode(ECCodes.EC_OP_RENAME_FILE);
         try {
             epReq.addTag(new ECTag(ECTag.EC_TAG_KNOWNFILE, ECTag.EC_TAGTYPE_HASH16, hash));
             epReq.addTag(new ECTag(ECTag.EC_TAG_PARTFILE_NAME, ECTag.EC_TAGTYPE_STRING, newName));
@@ -327,7 +319,7 @@ public class ECClient {
         
         ECPacket epResp = sendRequestAndWaitResponse(epReq);
         switch (epResp.getOpCode()) {
-        case ECPacket.EC_OP_NOOP:
+        case ECCodes.EC_OP_NOOP:
             // TODO Do something?
             return;
         default:
@@ -336,9 +328,9 @@ public class ECClient {
         
     }
     
-    public void setDownloadPriority(byte[] hash, byte prio) throws ECException, IOException {
+    public void setDownloadPriority(byte[] hash, byte prio) throws ECException, IOException, DataFormatException {
         ECPacket epReq = new ECPacket();
-        epReq.setOpCode(ECPacket.EC_OP_PARTFILE_PRIO_SET);
+        epReq.setOpCode(ECCodes.EC_OP_PARTFILE_PRIO_SET);
         try {
             ECTag t = new ECTag(ECTag.EC_TAG_PARTFILE, ECTag.EC_TAGTYPE_HASH16, hash);
             t.addSubTag(new ECTag(ECTag.EC_TAG_PARTFILE_PRIO, ECTag.EC_TAGTYPE_UINT8, prio));
@@ -353,7 +345,7 @@ public class ECClient {
         
         ECPacket epResp = sendRequestAndWaitResponse(epReq);
         switch (epResp.getOpCode()) {
-        case ECPacket.EC_OP_NOOP:
+        case ECCodes.EC_OP_NOOP:
             // TODO Do something?
             return;
         default:
