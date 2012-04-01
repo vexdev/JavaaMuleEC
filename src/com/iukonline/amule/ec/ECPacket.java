@@ -74,7 +74,7 @@ public class ECPacket {
         out.write(encodedPacket.asByteArray());
     }
     
-    public static ECPacket readFromStream(InputStream in) throws IOException, ECException, DataFormatException {
+    public static ECPacket readFromStream(InputStream in) throws IOException, ECException {
         ECRawPacket raw = new ECRawPacket(in);
         ECPacket n = raw.parse();
         n.encodedPacket = raw;

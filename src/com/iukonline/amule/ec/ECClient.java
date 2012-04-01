@@ -49,10 +49,8 @@ public class ECClient {
         this.tracer = tracer;
     }
     
-    public ECPacket sendRequestAndWaitResponse(ECPacket epReq, boolean tryLogin) throws IOException, ECException, DataFormatException {
+    public ECPacket sendRequestAndWaitResponse(ECPacket epReq, boolean tryLogin) throws IOException, ECException {
 
-
-        
         OutputStream os = socket.getOutputStream();
         if (tracer != null) {
             tracer.print("Sending EC packet...\n" + epReq.toString() + "\n\n");
@@ -97,11 +95,11 @@ public class ECClient {
 
     }
     
-    public ECPacket sendRequestAndWaitResponse(ECPacket epReq) throws IOException, ECException, DataFormatException {
+    public ECPacket sendRequestAndWaitResponse(ECPacket epReq) throws IOException, ECException {
         return sendRequestAndWaitResponse(epReq, true);
     }
 
-    public boolean login() throws IOException, ECException, DataFormatException {
+    public boolean login() throws IOException, ECException {
         
         
         ECPacket epReq = new ECPacket();
@@ -127,7 +125,7 @@ public class ECClient {
         }
     }
     
-    public void addED2KURL(String url) throws ECException, IOException, DataFormatException {
+    public void addED2KURL(String url) throws ECException, IOException {
         ECPacket epReq = new ECPacket();
         epReq.setOpCode(ECCodes.EC_OP_ADD_LINK);
         try {
@@ -145,22 +143,22 @@ public class ECClient {
         }
     }
     
-    public ECPartFile[] getDownloadQueue() throws ECException, IOException, DataFormatException {
+    public ECPartFile[] getDownloadQueue() throws ECException, IOException {
         return getDownloadQueue(null, null);
     }
     
-    public ECPartFile getDownloadQueueItem(byte[] hash) throws ECException, IOException, DataFormatException {
+    public ECPartFile getDownloadQueueItem(byte[] hash) throws ECException, IOException {
         ECPartFile[] list = getDownloadQueue(hash, null);
         return list.length > 0 ? list[0] : null;
     }
     
-    public ECPartFile getDownloadQueueItem(ECPartFile p) throws ECException, IOException, DataFormatException {
+    public ECPartFile getDownloadQueueItem(ECPartFile p) throws ECException, IOException {
         ECPartFile[] list = getDownloadQueue(p.getHash(), null);
         return list.length > 0 ? list[0] : null;
     }
     
     
-    private ECPartFile[] getDownloadQueue(byte[] hash, ECPartFile p) throws ECException, IOException, DataFormatException {
+    private ECPartFile[] getDownloadQueue(byte[] hash, ECPartFile p) throws ECException, IOException {
         
         ECPacket epReq = new ECPacket();
         epReq.setOpCode(ECCodes.EC_OP_GET_DLOAD_QUEUE);
@@ -216,15 +214,15 @@ public class ECClient {
         }        
     }
     
-    public ECPartFile getDownloadDetails(ECPartFile p) throws IOException, ECException, DataFormatException {
+    public ECPartFile getDownloadDetails(ECPartFile p) throws IOException, ECException {
         return getDownloadDetails(p.getHash(), p);
     }
     
-    public ECPartFile getDownloadDetails(byte[] hash) throws IOException, ECException, DataFormatException {
+    public ECPartFile getDownloadDetails(byte[] hash) throws IOException, ECException {
         return getDownloadDetails(hash, null);
     }
     
-    public ECPartFile getDownloadDetails(byte[] hash, ECPartFile p) throws IOException, ECException, DataFormatException {
+    public ECPartFile getDownloadDetails(byte[] hash, ECPartFile p) throws IOException, ECException {
 
         ECPacket epReq = new ECPacket();
         epReq.setOpCode(ECCodes.EC_OP_GET_DLOAD_QUEUE_DETAIL);
@@ -259,7 +257,7 @@ public class ECClient {
 
     }
     
-    public ECStats getStats() throws ECException, IOException, DataFormatException {
+    public ECStats getStats() throws ECException, IOException {
         
         ECPacket epReq = new ECPacket();
         epReq.setOpCode(ECCodes.EC_OP_STAT_REQ);
@@ -283,7 +281,7 @@ public class ECClient {
         
     }
     
-    void changeDownloadStatus(byte[] hash, byte opCode) throws ECException, IOException, DataFormatException {
+    void changeDownloadStatus(byte[] hash, byte opCode) throws ECException, IOException {
 
         
         ECPacket epReq = new ECPacket();
@@ -307,7 +305,7 @@ public class ECClient {
         
     }
     
-    public void renameDownload(byte[] hash, String newName) throws ECException, IOException, DataFormatException {
+    public void renameDownload(byte[] hash, String newName) throws ECException, IOException {
         ECPacket epReq = new ECPacket();
         epReq.setOpCode(ECCodes.EC_OP_RENAME_FILE);
         try {
@@ -328,7 +326,7 @@ public class ECClient {
         
     }
     
-    public void setDownloadPriority(byte[] hash, byte prio) throws ECException, IOException, DataFormatException {
+    public void setDownloadPriority(byte[] hash, byte prio) throws ECException, IOException {
         ECPacket epReq = new ECPacket();
         epReq.setOpCode(ECCodes.EC_OP_PARTFILE_PRIO_SET);
         try {
