@@ -122,7 +122,7 @@ public class ECRawPacket {
         setZlibCompressed(p.isZlibCompressed());
         setAcceptsUTF8(p.acceptsUTF8());
         setAcceptsZlib(p.acceptsZlib());
-        setHasAccepts(accepts == EC_FLAG_DEFAULT_ACCEPTS);
+        setHasAccepts(accepts != EC_FLAG_DEFAULT_ACCEPTS);
         
         rawFlags = ECUtils.uintToBytes(flags, 4, true);
         rawAccepts = ECUtils.uintToBytes(accepts, 4, true);
@@ -152,7 +152,7 @@ public class ECRawPacket {
         rawPayload[0] = p.getOpCode();
         if (debug) System.out.println("ECRawPacket: packet dump after opCode:\n" + this.dump());
         System.arraycopy(ECUtils.uintToBytes(tags.size(), 2, true), 0, rawPayload, 1, 2);
-        if (debug) System.out.println("ECRawPacket: packet dump after tagSize:\n" + this.dump());   
+        if (debug) System.out.println("ECRawPacket: packet dump after tagsCount:\n" + this.dump());   
         
         
         if (tags.size() > 0) {
@@ -233,11 +233,13 @@ public class ECRawPacket {
     
     public boolean hasAccepts() { return (flags & ECCodes.EC_FLAG_ACCEPTS) == ECCodes.EC_FLAG_ACCEPTS; }
     public void setHasAccepts( boolean hasAccepts ) { 
+        if (debug) System.out.println("Setting hasAccepts to " + hasAccepts);
         if (hasAccepts) {
             flags |= ECCodes.EC_FLAG_ACCEPTS; 
         } else {
             if (hasAccepts()) flags ^= ECCodes.EC_FLAG_ACCEPTS;
         }
+        if (debug) System.out.println("hasAccepts now is " + hasAccepts());
     }
     
     
@@ -425,6 +427,11 @@ public class ECRawPacket {
                 s.append(rawTagsList[i].dump(0));
                 nextIndex = rawTagsList[i].tagEnd + 1;
             }
+            
+            if (nextIndex < rawPayload.length) {
+                s.append(ECUtils.hexDecode(rawPayload, nextIndex, rawPayload.length - nextIndex, "Unexpected remaining payload", hexPerRow, 0));
+            }
+            
         } catch (ECException e) {
             try {
                 if (! flagsDumped) {
@@ -503,16 +510,29 @@ public class ECRawPacket {
             int tagLen = 0;
 
             tagValueIndex = subTagsCountIndex;
+            subTagsIndex = tagValueIndex + 2; // TODO UTF-8 Compression
+
             if (subTags.size() > 0) {
+                tagValueIndex = subTagsIndex;
                 setHasSubTags(true);
                 if (debug) System.out.println("ECRawTag: packet dump after setting hasSubTags:\n" + ECRawPacket.this.dump());
+                
+                rawSubTagsList = new ECRawTag[subTags.size()];
                 for (int i = 0; i < subTags.size(); i++) {
+                    if (debug) System.out.println("ECRawTag: adding subTag " + i + ":\n");
                     ECRawTag sub = new ECRawTag(subTags.get(i), tagValueIndex);
                     if (debug) System.out.println("ECRawTag: packet dump after setting suBTag " + i + ":\n" + ECRawPacket.this.dump());
                     tagValueIndex = sub.tagEnd + 1;
                     tagLen += sub.getUncompressedTagLength();
+                    rawSubTagsList[i] = sub;
+
                 }
                 if (debug) System.out.println("ECRawTag: packet dump after setting subTags:\n" + ECRawPacket.this.dump());
+                
+                setSubTagsCount(subTags.size());
+                if (debug) System.out.println("ECRawTag: packet dump after setting subTagsCount:\n" + ECRawPacket.this.dump());
+
+                
             }
             
             
@@ -786,6 +806,14 @@ public class ECRawPacket {
                     throw new ECException("Error parsing tagLen - invalid UTF8 sequence.", e);
                 }
             }
+        }
+        
+        
+        public void setSubTagsCount(int count) {
+            // TODO UTF-8 Compression
+            if (debug) System.out.println("ECRawTag.setSubTagsCount: setting count " + count + " between indexes " + subTagsCountIndex + " and " + subTagsIndex);
+            int l = subTagsIndex - subTagsCountIndex;
+            System.arraycopy(ECUtils.uintToBytes(count, l, true), 0, rawPayload, subTagsCountIndex, l);
         }
         
         public int getTagEnd() {
@@ -1095,6 +1123,7 @@ public class ECRawPacket {
         }
         
         public void setTagValue(byte[] value) {
+            if (debug) System.out.println("ECRawTag.setTagLen: setting value " + ECUtils.byteArrayToHexString(value) + " between indexes " + tagValueIndex + " and " + (tagValueIndex + value.length));
             if (value != null && value.length > 0) System.arraycopy(value, 0, rawPayload, tagValueIndex, value.length);
         }
         
@@ -1109,7 +1138,7 @@ public class ECRawPacket {
             
                 s.append(ECUtils.hexDecode(rawPayload, tagNameIndex, tagTypeIndex - tagNameIndex, "tagName=" + getTagNameString() + " hasSubTags=" + hasSubTags(), hexPerRow, indent));
                 nextIndex = tagTypeIndex;
-                s.append(ECUtils.hexDecode(rawPayload, tagTypeIndex, 1, "tagType=" + getTagTypeString() + " hasSubTags=" + hasSubTags(), hexPerRow, indent));
+                s.append(ECUtils.hexDecode(rawPayload, tagTypeIndex, 1, "tagType=" + getTagTypeString(), hexPerRow, indent));
                 nextIndex = tagLenIndex;
                 s.append(ECUtils.hexDecode(rawPayload, tagLenIndex, subTagsCountIndex - tagLenIndex , "tagLen=" + getTagLen(), hexPerRow, indent));
                 nextIndex = subTagsCountIndex;
@@ -1121,6 +1150,13 @@ public class ECRawPacket {
                     nextIndex = subTagsIndex;
                     
                     for (int i = 0; i < subTagsCount; i++) {
+                        
+                        if (rawSubTagsList == null) throw new ECException("subTagsList not decoded while it was expeted to be");
+                        if (i >= rawSubTagsList.length) throw new ECException("Expecting " + subTagsCount + " subTags, found only " + rawSubTagsList.length);
+                        if (rawSubTagsList[i] == null) throw new ECException("subTag " + i + " not present where expected");
+
+                        
+                        
                         s.append(rawSubTagsList[i].dump(indent + 1));
                         nextIndex = rawSubTagsList[i].tagEnd + 1;
                     }

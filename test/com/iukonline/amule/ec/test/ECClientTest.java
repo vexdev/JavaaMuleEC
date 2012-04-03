@@ -99,9 +99,15 @@ public class ECClientTest {
                                 d.getPrio()
                                 );
             }
+            
+            //dlQueue[0].swapA4AFThis();
+            dlQueue[0].changePriority(dlQueue[0].getPrio());
+            
         }
         
         assertTrue(dlQueue != null);
+        
+        
         
 
     }

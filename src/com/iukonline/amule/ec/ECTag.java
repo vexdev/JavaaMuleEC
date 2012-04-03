@@ -309,18 +309,26 @@ public class ECTag implements ECCodes, ECTagTypes {
         
         if (! subTags.isEmpty()) {
             if (withHeader)
-                try {
-                    len += ECUtils.UTF8Length(subTags.size());
-                } catch (CharacterCodingException e) {
-                    throw new ECException("Invlid tag count, not UTF-8 encodable: " + len, e);
-                } 
+                
+                if (isUTF8Compressed) {
+                
+                    try {
+                        len += ECUtils.UTF8Length(subTags.size());
+                    } catch (CharacterCodingException e) {
+                        throw new ECException("Invlid tag count, not UTF-8 encodable: " + len, e);
+                    } 
+                } else {
+                    len += 2;
+                }
+        
+                Iterator<ECTag> itr = subTags.iterator();
+                while(itr.hasNext()) {
+                    // TODO: VERIFY. It seems that packet len is computed as not comrpessed for subtags
+                     len += itr.next().getLength(true, isUTF8Compressed);
+                    //len += itr.next().getLength(true, false);
+                }
 
-            Iterator<ECTag> itr = subTags.iterator();
-            while(itr.hasNext()) {
-                // TODO: VERIFY. It seems that packet len is computed as not comrpessed for subtags
-                 len += itr.next().getLength(true, isUTF8Compressed);
-                //len += itr.next().getLength(true, false);
-            }
+            
         }
         
         return len;
