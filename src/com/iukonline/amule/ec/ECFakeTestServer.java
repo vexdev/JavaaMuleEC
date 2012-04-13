@@ -21,49 +21,49 @@ public class ECFakeTestServer {
             
             ECTag pf1;
             
-            pf1 = new ECTag(ECTag.EC_TAG_PARTFILE, ECTag.EC_TAGTYPE_HASH16, hash1);
-            pf1.addSubTag(new ECTag(ECTag.EC_TAG_PARTFILE_NAME, ECTag.EC_TAGTYPE_STRING, "FILE number 1.xxx"));
+            pf1 = new ECTag(ECCodes.EC_TAG_PARTFILE, ECTagTypes.EC_TAGTYPE_HASH16, hash1);
+            pf1.addSubTag(new ECTag(ECCodes.EC_TAG_PARTFILE_NAME, ECTagTypes.EC_TAGTYPE_STRING, "FILE number 1.xxx"));
             
-            pf1.addSubTag(new ECTag(ECTag.EC_TAG_PARTFILE_NAME, ECTag.EC_TAGTYPE_STRING, "FILE number 1.xxx"));
-            pf1.addSubTag(new ECTag(ECTag.EC_TAG_PARTFILE_ED2K_LINK, ECTag.EC_TAGTYPE_STRING, "ed2k://sssss/"));
-            pf1.addSubTag(new ECTag(ECTag.EC_TAG_PARTFILE_STATUS, ECTag.EC_TAGTYPE_UINT8, ECPartFile.PS_READY));
-            pf1.addSubTag(new ECTag(ECTag.EC_TAG_PARTFILE_PRIO, ECTag.EC_TAGTYPE_UINT8, ECPartFile.PR_AUTO_HIGH));
-            pf1.addSubTag(new ECTag(ECTag.EC_TAG_PARTFILE_SPEED, ECTag.EC_TAGTYPE_UINT8, 100));
-            pf1.addSubTag(new ECTag(ECTag.EC_TAG_PARTFILE_SIZE_FULL, ECTag.EC_TAGTYPE_UINT16, 30000));
-            pf1.addSubTag(new ECTag(ECTag.EC_TAG_PARTFILE_SIZE_DONE, ECTag.EC_TAGTYPE_UINT16, 10000));
-            pf1.addSubTag(new ECTag(ECTag.EC_TAG_PARTFILE_SOURCE_COUNT, ECTag.EC_TAGTYPE_UINT8, 100));
-            pf1.addSubTag(new ECTag(ECTag.EC_TAG_PARTFILE_SOURCE_COUNT_A4AF, ECTag.EC_TAGTYPE_UINT8, 5));
-            pf1.addSubTag(new ECTag(ECTag.EC_TAG_PARTFILE_SOURCE_COUNT_XFER, ECTag.EC_TAGTYPE_UINT8, 1));
-            pf1.addSubTag(new ECTag(ECTag.EC_TAG_PARTFILE_SOURCE_COUNT_NOT_CURRENT, ECTag.EC_TAGTYPE_UINT8, 2));
-            pf1.addSubTag(new ECTag(ECTag.EC_TAG_PARTFILE_LAST_SEEN_COMP, ECTag.EC_TAGTYPE_UINT8, 1));
+            pf1.addSubTag(new ECTag(ECCodes.EC_TAG_PARTFILE_NAME, ECTagTypes.EC_TAGTYPE_STRING, "FILE number 1.xxx"));
+            pf1.addSubTag(new ECTag(ECCodes.EC_TAG_PARTFILE_ED2K_LINK, ECTagTypes.EC_TAGTYPE_STRING, "ed2k://sssss/"));
+            pf1.addSubTag(new ECTag(ECCodes.EC_TAG_PARTFILE_STATUS, ECTagTypes.EC_TAGTYPE_UINT8, ECPartFile.PS_READY));
+            pf1.addSubTag(new ECTag(ECCodes.EC_TAG_PARTFILE_PRIO, ECTagTypes.EC_TAGTYPE_UINT8, ECPartFile.PR_AUTO_HIGH));
+            pf1.addSubTag(new ECTag(ECCodes.EC_TAG_PARTFILE_SPEED, ECTagTypes.EC_TAGTYPE_UINT8, 100));
+            pf1.addSubTag(new ECTag(ECCodes.EC_TAG_PARTFILE_SIZE_FULL, ECTagTypes.EC_TAGTYPE_UINT16, 30000));
+            pf1.addSubTag(new ECTag(ECCodes.EC_TAG_PARTFILE_SIZE_DONE, ECTagTypes.EC_TAGTYPE_UINT16, 10000));
+            pf1.addSubTag(new ECTag(ECCodes.EC_TAG_PARTFILE_SOURCE_COUNT, ECTagTypes.EC_TAGTYPE_UINT8, 100));
+            pf1.addSubTag(new ECTag(ECCodes.EC_TAG_PARTFILE_SOURCE_COUNT_A4AF, ECTagTypes.EC_TAGTYPE_UINT8, 5));
+            pf1.addSubTag(new ECTag(ECCodes.EC_TAG_PARTFILE_SOURCE_COUNT_XFER, ECTagTypes.EC_TAGTYPE_UINT8, 1));
+            pf1.addSubTag(new ECTag(ECCodes.EC_TAG_PARTFILE_SOURCE_COUNT_NOT_CURRENT, ECTagTypes.EC_TAGTYPE_UINT8, 2));
+            pf1.addSubTag(new ECTag(ECCodes.EC_TAG_PARTFILE_LAST_SEEN_COMP, ECTagTypes.EC_TAGTYPE_UINT8, 1));
             
-            ECTag com1 = new ECTag(ECTag.EC_TAG_PARTFILE_COMMENTS, ECTag.EC_TAGTYPE_UINT8, 0);
-            com1.addSubTag(new ECTag(ECTag.EC_TAG_PARTFILE_COMMENTS, ECTag.EC_TAGTYPE_STRING, "AUTHOR 1"));
-            com1.addSubTag(new ECTag(ECTag.EC_TAG_PARTFILE_COMMENTS, ECTag.EC_TAGTYPE_STRING, "PART NAME 1"));
-            com1.addSubTag(new ECTag(ECTag.EC_TAG_PARTFILE_SOURCE_NAMES, ECTag.EC_TAGTYPE_UINT8, 1));
-            com1.addSubTag(new ECTag(ECTag.EC_TAG_PARTFILE_COMMENTS, ECTag.EC_TAGTYPE_STRING, "COMMENT 1"));
-            com1.addSubTag(new ECTag(ECTag.EC_TAG_PARTFILE_COMMENTS, ECTag.EC_TAGTYPE_STRING, "AUTHOR 2"));
-            com1.addSubTag(new ECTag(ECTag.EC_TAG_PARTFILE_COMMENTS, ECTag.EC_TAGTYPE_STRING, "PART NAME 2"));
-            com1.addSubTag(new ECTag(ECTag.EC_TAG_PARTFILE_SOURCE_NAMES, ECTag.EC_TAGTYPE_UINT8, 2));
-            com1.addSubTag(new ECTag(ECTag.EC_TAG_PARTFILE_COMMENTS, ECTag.EC_TAGTYPE_STRING, "COMMENT 2"));
-            com1.addSubTag(new ECTag(ECTag.EC_TAG_PARTFILE_COMMENTS, ECTag.EC_TAGTYPE_STRING, "AUTHOR 3"));
-            com1.addSubTag(new ECTag(ECTag.EC_TAG_PARTFILE_COMMENTS, ECTag.EC_TAGTYPE_STRING, "PART NAME 3"));
-            com1.addSubTag(new ECTag(ECTag.EC_TAG_PARTFILE_SOURCE_NAMES, ECTag.EC_TAGTYPE_UINT8, 3));
-            com1.addSubTag(new ECTag(ECTag.EC_TAG_PARTFILE_COMMENTS, ECTag.EC_TAGTYPE_STRING, "COMMENT 3"));
+            ECTag com1 = new ECTag(ECCodes.EC_TAG_PARTFILE_COMMENTS, ECTagTypes.EC_TAGTYPE_UINT8, 0);
+            com1.addSubTag(new ECTag(ECCodes.EC_TAG_PARTFILE_COMMENTS, ECTagTypes.EC_TAGTYPE_STRING, "AUTHOR 1"));
+            com1.addSubTag(new ECTag(ECCodes.EC_TAG_PARTFILE_COMMENTS, ECTagTypes.EC_TAGTYPE_STRING, "PART NAME 1"));
+            com1.addSubTag(new ECTag(ECCodes.EC_TAG_PARTFILE_SOURCE_NAMES, ECTagTypes.EC_TAGTYPE_UINT8, 1));
+            com1.addSubTag(new ECTag(ECCodes.EC_TAG_PARTFILE_COMMENTS, ECTagTypes.EC_TAGTYPE_STRING, "COMMENT 1"));
+            com1.addSubTag(new ECTag(ECCodes.EC_TAG_PARTFILE_COMMENTS, ECTagTypes.EC_TAGTYPE_STRING, "AUTHOR 2"));
+            com1.addSubTag(new ECTag(ECCodes.EC_TAG_PARTFILE_COMMENTS, ECTagTypes.EC_TAGTYPE_STRING, "PART NAME 2"));
+            com1.addSubTag(new ECTag(ECCodes.EC_TAG_PARTFILE_SOURCE_NAMES, ECTagTypes.EC_TAGTYPE_UINT8, 2));
+            com1.addSubTag(new ECTag(ECCodes.EC_TAG_PARTFILE_COMMENTS, ECTagTypes.EC_TAGTYPE_STRING, "COMMENT 2"));
+            com1.addSubTag(new ECTag(ECCodes.EC_TAG_PARTFILE_COMMENTS, ECTagTypes.EC_TAGTYPE_STRING, "AUTHOR 3"));
+            com1.addSubTag(new ECTag(ECCodes.EC_TAG_PARTFILE_COMMENTS, ECTagTypes.EC_TAGTYPE_STRING, "PART NAME 3"));
+            com1.addSubTag(new ECTag(ECCodes.EC_TAG_PARTFILE_SOURCE_NAMES, ECTagTypes.EC_TAGTYPE_UINT8, 3));
+            com1.addSubTag(new ECTag(ECCodes.EC_TAG_PARTFILE_COMMENTS, ECTagTypes.EC_TAGTYPE_STRING, "COMMENT 3"));
             pf1.addSubTag(com1);
             
-            ECTag sn1 = new ECTag(ECTag.EC_TAG_PARTFILE_SOURCE_NAMES, ECTag.EC_TAGTYPE_UINT8, 0);
+            ECTag sn1 = new ECTag(ECCodes.EC_TAG_PARTFILE_SOURCE_NAMES, ECTagTypes.EC_TAGTYPE_UINT8, 0);
             
-            sn1.addSubTag(new ECTag(ECTag.EC_TAG_PARTFILE_SOURCE_NAMES, ECTag.EC_TAGTYPE_STRING, "PART NAME 1"));
-            sn1.addSubTag(new ECTag(ECTag.EC_TAG_PARTFILE_SOURCE_NAMES, ECTag.EC_TAGTYPE_UINT8, 1));
-            sn1.addSubTag(new ECTag(ECTag.EC_TAG_PARTFILE_SOURCE_NAMES, ECTag.EC_TAGTYPE_STRING, "PART NAME 2"));
-            sn1.addSubTag(new ECTag(ECTag.EC_TAG_PARTFILE_SOURCE_NAMES, ECTag.EC_TAGTYPE_UINT8, 2));
-            sn1.addSubTag(new ECTag(ECTag.EC_TAG_PARTFILE_SOURCE_NAMES, ECTag.EC_TAGTYPE_STRING, "PART NAME 3"));
-            sn1.addSubTag(new ECTag(ECTag.EC_TAG_PARTFILE_SOURCE_NAMES, ECTag.EC_TAGTYPE_UINT8, 3));
-            sn1.addSubTag(new ECTag(ECTag.EC_TAG_PARTFILE_SOURCE_NAMES, ECTag.EC_TAGTYPE_STRING, "PART NAME 4"));
-            sn1.addSubTag(new ECTag(ECTag.EC_TAG_PARTFILE_SOURCE_NAMES, ECTag.EC_TAGTYPE_UINT8, 4));
-            sn1.addSubTag(new ECTag(ECTag.EC_TAG_PARTFILE_SOURCE_NAMES, ECTag.EC_TAGTYPE_STRING, "PART NAME 5"));
-            sn1.addSubTag(new ECTag(ECTag.EC_TAG_PARTFILE_SOURCE_NAMES, ECTag.EC_TAGTYPE_UINT8, 5));
+            sn1.addSubTag(new ECTag(ECCodes.EC_TAG_PARTFILE_SOURCE_NAMES, ECTagTypes.EC_TAGTYPE_STRING, "PART NAME 1"));
+            sn1.addSubTag(new ECTag(ECCodes.EC_TAG_PARTFILE_SOURCE_NAMES, ECTagTypes.EC_TAGTYPE_UINT8, 1));
+            sn1.addSubTag(new ECTag(ECCodes.EC_TAG_PARTFILE_SOURCE_NAMES, ECTagTypes.EC_TAGTYPE_STRING, "PART NAME 2"));
+            sn1.addSubTag(new ECTag(ECCodes.EC_TAG_PARTFILE_SOURCE_NAMES, ECTagTypes.EC_TAGTYPE_UINT8, 2));
+            sn1.addSubTag(new ECTag(ECCodes.EC_TAG_PARTFILE_SOURCE_NAMES, ECTagTypes.EC_TAGTYPE_STRING, "PART NAME 3"));
+            sn1.addSubTag(new ECTag(ECCodes.EC_TAG_PARTFILE_SOURCE_NAMES, ECTagTypes.EC_TAGTYPE_UINT8, 3));
+            sn1.addSubTag(new ECTag(ECCodes.EC_TAG_PARTFILE_SOURCE_NAMES, ECTagTypes.EC_TAGTYPE_STRING, "PART NAME 4"));
+            sn1.addSubTag(new ECTag(ECCodes.EC_TAG_PARTFILE_SOURCE_NAMES, ECTagTypes.EC_TAGTYPE_UINT8, 4));
+            sn1.addSubTag(new ECTag(ECCodes.EC_TAG_PARTFILE_SOURCE_NAMES, ECTagTypes.EC_TAGTYPE_STRING, "PART NAME 5"));
+            sn1.addSubTag(new ECTag(ECCodes.EC_TAG_PARTFILE_SOURCE_NAMES, ECTagTypes.EC_TAGTYPE_UINT8, 5));
             
             pf1.addSubTag(sn1);
             
@@ -76,21 +76,21 @@ public class ECFakeTestServer {
             
             ECTag pf2;
             
-            pf2 = new ECTag(ECTag.EC_TAG_PARTFILE, ECTag.EC_TAGTYPE_HASH16, hash2);
-            pf2.addSubTag(new ECTag(ECTag.EC_TAG_PARTFILE_NAME, ECTag.EC_TAGTYPE_STRING, "FILE number 2.xxx"));
+            pf2 = new ECTag(ECCodes.EC_TAG_PARTFILE, ECTagTypes.EC_TAGTYPE_HASH16, hash2);
+            pf2.addSubTag(new ECTag(ECCodes.EC_TAG_PARTFILE_NAME, ECTagTypes.EC_TAGTYPE_STRING, "FILE number 2.xxx"));
             
-            pf2.addSubTag(new ECTag(ECTag.EC_TAG_PARTFILE_NAME, ECTag.EC_TAGTYPE_STRING, "FILE number 2.xxx"));
-            pf2.addSubTag(new ECTag(ECTag.EC_TAG_PARTFILE_ED2K_LINK, ECTag.EC_TAGTYPE_STRING, "ed2k://ttttt/"));
-            pf2.addSubTag(new ECTag(ECTag.EC_TAG_PARTFILE_STATUS, ECTag.EC_TAGTYPE_UINT8, ECPartFile.PS_READY));
-            pf2.addSubTag(new ECTag(ECTag.EC_TAG_PARTFILE_PRIO, ECTag.EC_TAGTYPE_UINT8, ECPartFile.PR_AUTO_HIGH));
-            pf2.addSubTag(new ECTag(ECTag.EC_TAG_PARTFILE_SPEED, ECTag.EC_TAGTYPE_UINT8, 100));
-            pf2.addSubTag(new ECTag(ECTag.EC_TAG_PARTFILE_SIZE_FULL, ECTag.EC_TAGTYPE_UINT16, 30000));
-            pf2.addSubTag(new ECTag(ECTag.EC_TAG_PARTFILE_SIZE_DONE, ECTag.EC_TAGTYPE_UINT16, 10000));
-            pf2.addSubTag(new ECTag(ECTag.EC_TAG_PARTFILE_SOURCE_COUNT, ECTag.EC_TAGTYPE_UINT8, 100));
-            pf2.addSubTag(new ECTag(ECTag.EC_TAG_PARTFILE_SOURCE_COUNT_A4AF, ECTag.EC_TAGTYPE_UINT8, 5));
-            pf2.addSubTag(new ECTag(ECTag.EC_TAG_PARTFILE_SOURCE_COUNT_XFER, ECTag.EC_TAGTYPE_UINT8, 1));
-            pf2.addSubTag(new ECTag(ECTag.EC_TAG_PARTFILE_SOURCE_COUNT_NOT_CURRENT, ECTag.EC_TAGTYPE_UINT8, 2));
-            pf2.addSubTag(new ECTag(ECTag.EC_TAG_PARTFILE_LAST_SEEN_COMP, ECTag.EC_TAGTYPE_UINT8, 1));
+            pf2.addSubTag(new ECTag(ECCodes.EC_TAG_PARTFILE_NAME, ECTagTypes.EC_TAGTYPE_STRING, "FILE number 2.xxx"));
+            pf2.addSubTag(new ECTag(ECCodes.EC_TAG_PARTFILE_ED2K_LINK, ECTagTypes.EC_TAGTYPE_STRING, "ed2k://ttttt/"));
+            pf2.addSubTag(new ECTag(ECCodes.EC_TAG_PARTFILE_STATUS, ECTagTypes.EC_TAGTYPE_UINT8, ECPartFile.PS_READY));
+            pf2.addSubTag(new ECTag(ECCodes.EC_TAG_PARTFILE_PRIO, ECTagTypes.EC_TAGTYPE_UINT8, ECPartFile.PR_AUTO_HIGH));
+            pf2.addSubTag(new ECTag(ECCodes.EC_TAG_PARTFILE_SPEED, ECTagTypes.EC_TAGTYPE_UINT8, 100));
+            pf2.addSubTag(new ECTag(ECCodes.EC_TAG_PARTFILE_SIZE_FULL, ECTagTypes.EC_TAGTYPE_UINT16, 30000));
+            pf2.addSubTag(new ECTag(ECCodes.EC_TAG_PARTFILE_SIZE_DONE, ECTagTypes.EC_TAGTYPE_UINT16, 10000));
+            pf2.addSubTag(new ECTag(ECCodes.EC_TAG_PARTFILE_SOURCE_COUNT, ECTagTypes.EC_TAGTYPE_UINT8, 100));
+            pf2.addSubTag(new ECTag(ECCodes.EC_TAG_PARTFILE_SOURCE_COUNT_A4AF, ECTagTypes.EC_TAGTYPE_UINT8, 5));
+            pf2.addSubTag(new ECTag(ECCodes.EC_TAG_PARTFILE_SOURCE_COUNT_XFER, ECTagTypes.EC_TAGTYPE_UINT8, 1));
+            pf2.addSubTag(new ECTag(ECCodes.EC_TAG_PARTFILE_SOURCE_COUNT_NOT_CURRENT, ECTagTypes.EC_TAGTYPE_UINT8, 2));
+            pf2.addSubTag(new ECTag(ECCodes.EC_TAG_PARTFILE_LAST_SEEN_COMP, ECTagTypes.EC_TAGTYPE_UINT8, 1));
             
             partFileList.put(ECUtils.byteArrayToHexString(hash1), pf1);
             partFileList.put(ECUtils.byteArrayToHexString(hash2), pf2);
@@ -146,7 +146,7 @@ public class ECFakeTestServer {
             epResp = new ECPacket();
             epResp.setOpCode(ECCodes.EC_OP_FAILED);
             try {
-                epResp.addTag(new ECTag(ECTag.EC_TAG_STRING, ECTag.EC_TAGTYPE_STRING, "FAKE SERVER - Unknown op code received"));
+                epResp.addTag(new ECTag(ECCodes.EC_TAG_STRING, ECTagTypes.EC_TAGTYPE_STRING, "FAKE SERVER - Unknown op code received"));
             } catch (DataFormatException e) {
 
                 e.printStackTrace();
@@ -160,8 +160,8 @@ public class ECFakeTestServer {
         ECPacket stats = new ECPacket();
         stats.setOpCode(ECCodes.EC_OP_STATS);
         try {
-            stats.addTag(new ECTag(ECTag.EC_TAG_STATS_DL_SPEED, ECTag.EC_TAGTYPE_UINT16, 100));
-            stats.addTag(new ECTag(ECTag.EC_TAG_STATS_UL_SPEED, ECTag.EC_TAGTYPE_UINT16, 200));
+            stats.addTag(new ECTag(ECCodes.EC_TAG_STATS_DL_SPEED, ECTagTypes.EC_TAGTYPE_UINT16, 100));
+            stats.addTag(new ECTag(ECCodes.EC_TAG_STATS_UL_SPEED, ECTagTypes.EC_TAGTYPE_UINT16, 200));
         } catch (DataFormatException e) {
 
             e.printStackTrace();
@@ -189,12 +189,12 @@ public class ECFakeTestServer {
         
         
         try {
-            byte[] hash = epReq.getTagByName(ECTag.EC_TAG_PARTFILE).getTagValueHash();
+            byte[] hash = epReq.getTagByName(ECCodes.EC_TAG_PARTFILE).getTagValueHash();
             ECTag t = partFileList.get(ECUtils.byteArrayToHexString(hash));
             
             if (t == null) {
-                detail.setOpCode(ECTag.EC_OP_FAILED);
-                detail.addTag(new ECTag(ECTag.EC_TAG_STRING, ECTag.EC_TAGTYPE_STRING, "Invalid partfile requested"));
+                detail.setOpCode(ECCodes.EC_OP_FAILED);
+                detail.addTag(new ECTag(ECCodes.EC_TAG_STRING, ECTagTypes.EC_TAGTYPE_STRING, "Invalid partfile requested"));
             } else {
                 detail.setOpCode(ECCodes.EC_OP_DLOAD_QUEUE);
                 detail.addTag(partFileList.get(ECUtils.byteArrayToHexString(hash)));
@@ -211,24 +211,24 @@ public class ECFakeTestServer {
         ECPacket result = new ECPacket();
         
         try {
-            byte[] hash = epReq.getTagByName(ECTag.EC_TAG_PARTFILE).getTagValueHash();
+            byte[] hash = epReq.getTagByName(ECCodes.EC_TAG_PARTFILE).getTagValueHash();
             ECTag t = partFileList.get(ECUtils.byteArrayToHexString(hash));
             
             if (t == null) {
-                result.setOpCode(ECTag.EC_OP_FAILED);
-                result.addTag(new ECTag(ECTag.EC_TAG_STRING, ECTag.EC_TAGTYPE_STRING, "Invalid partfile requested"));
+                result.setOpCode(ECCodes.EC_OP_FAILED);
+                result.addTag(new ECTag(ECCodes.EC_TAG_STRING, ECTagTypes.EC_TAGTYPE_STRING, "Invalid partfile requested"));
             } else {
                 
                 switch (epReq.getOpCode()) {
                 case ECCodes.EC_OP_PARTFILE_PAUSE:
-                    t.getSubTagByName(ECTag.EC_TAG_PARTFILE_STATUS).setTagValueUInt(ECPartFile.PS_PAUSED);
-                    t.getSubTagByName(ECTag.EC_TAG_PARTFILE_SPEED).setTagValueUInt(0);
-                    t.getSubTagByName(ECTag.EC_TAG_PARTFILE_SOURCE_COUNT_XFER).setTagValueUInt(0);
+                    t.getSubTagByName(ECCodes.EC_TAG_PARTFILE_STATUS).setTagValueUInt(ECPartFile.PS_PAUSED);
+                    t.getSubTagByName(ECCodes.EC_TAG_PARTFILE_SPEED).setTagValueUInt(0);
+                    t.getSubTagByName(ECCodes.EC_TAG_PARTFILE_SOURCE_COUNT_XFER).setTagValueUInt(0);
                     break;
                 case ECCodes.EC_OP_PARTFILE_RESUME:
-                    t.getSubTagByName(ECTag.EC_TAG_PARTFILE_STATUS).setTagValueUInt(ECPartFile.PS_READY);
-                    t.getSubTagByName(ECTag.EC_TAG_PARTFILE_SPEED).setTagValueUInt(100);
-                    t.getSubTagByName(ECTag.EC_TAG_PARTFILE_SOURCE_COUNT_XFER).setTagValueUInt(1);
+                    t.getSubTagByName(ECCodes.EC_TAG_PARTFILE_STATUS).setTagValueUInt(ECPartFile.PS_READY);
+                    t.getSubTagByName(ECCodes.EC_TAG_PARTFILE_SPEED).setTagValueUInt(100);
+                    t.getSubTagByName(ECCodes.EC_TAG_PARTFILE_SOURCE_COUNT_XFER).setTagValueUInt(1);
                     break;
 
                 case ECCodes.EC_OP_PARTFILE_DELETE:
@@ -236,14 +236,14 @@ public class ECFakeTestServer {
                     
                 case ECCodes.EC_OP_PARTFILE_SWAP_A4AF_THIS:
                 case ECCodes.EC_OP_PARTFILE_SWAP_A4AF_THIS_AUTO:
-                    t.getSubTagByName(ECTag.EC_TAG_PARTFILE_SOURCE_COUNT_A4AF).setTagValueUInt(0);
+                    t.getSubTagByName(ECCodes.EC_TAG_PARTFILE_SOURCE_COUNT_A4AF).setTagValueUInt(0);
                     break;
                 case ECCodes.EC_OP_PARTFILE_SWAP_A4AF_OTHERS:
-                    t.getSubTagByName(ECTag.EC_TAG_PARTFILE_SOURCE_COUNT_A4AF).setTagValueUInt(1);
+                    t.getSubTagByName(ECCodes.EC_TAG_PARTFILE_SOURCE_COUNT_A4AF).setTagValueUInt(1);
                     break;
                 }
                 
-                result.setOpCode(ECTag.EC_OP_NOOP);
+                result.setOpCode(ECCodes.EC_OP_NOOP);
                 
             }
             
@@ -260,15 +260,15 @@ public class ECFakeTestServer {
         ECPacket result = new ECPacket();
         
         try {
-            byte[] hash = epReq.getTagByName(ECTag.EC_TAG_PARTFILE).getTagValueHash();
+            byte[] hash = epReq.getTagByName(ECCodes.EC_TAG_PARTFILE).getTagValueHash();
             ECTag t = partFileList.get(ECUtils.byteArrayToHexString(hash));
             
             if (t == null) {
-                result.setOpCode(ECTag.EC_OP_FAILED);
-                result.addTag(new ECTag(ECTag.EC_TAG_STRING, ECTag.EC_TAGTYPE_STRING, "Invalid partfile requested"));
+                result.setOpCode(ECCodes.EC_OP_FAILED);
+                result.addTag(new ECTag(ECCodes.EC_TAG_STRING, ECTagTypes.EC_TAGTYPE_STRING, "Invalid partfile requested"));
             } else {
-                result.setOpCode(ECTag.EC_OP_NOOP);
-                t.getSubTagByName(ECTag.EC_TAG_PARTFILE_PRIO).setTagValueUInt(epReq.getTagByName(ECTag.EC_TAG_PARTFILE).getSubTagByName(ECTag.EC_TAG_PARTFILE_PRIO).getTagValueUInt());
+                result.setOpCode(ECCodes.EC_OP_NOOP);
+                t.getSubTagByName(ECCodes.EC_TAG_PARTFILE_PRIO).setTagValueUInt(epReq.getTagByName(ECCodes.EC_TAG_PARTFILE).getSubTagByName(ECCodes.EC_TAG_PARTFILE_PRIO).getTagValueUInt());
             }
         } catch (DataFormatException e1) {
             
@@ -283,15 +283,15 @@ public class ECFakeTestServer {
         ECPacket result = new ECPacket();
         
         try {
-            byte[] hash = epReq.getTagByName(ECTag.EC_TAG_PARTFILE).getTagValueHash();
+            byte[] hash = epReq.getTagByName(ECCodes.EC_TAG_PARTFILE).getTagValueHash();
             ECTag t = partFileList.get(ECUtils.byteArrayToHexString(hash));
             
             if (t == null) {
-                result.setOpCode(ECTag.EC_OP_FAILED);
-                result.addTag(new ECTag(ECTag.EC_TAG_STRING, ECTag.EC_TAGTYPE_STRING, "Invalid partfile requested"));
+                result.setOpCode(ECCodes.EC_OP_FAILED);
+                result.addTag(new ECTag(ECCodes.EC_TAG_STRING, ECTagTypes.EC_TAGTYPE_STRING, "Invalid partfile requested"));
             } else {
-                result.setOpCode(ECTag.EC_OP_NOOP);
-                t.getSubTagByName(ECTag.EC_TAG_PARTFILE_NAME).setTagValueString(epReq.getTagByName(ECTag.EC_TAG_PARTFILE).getSubTagByName(ECTag.EC_TAG_PARTFILE_NAME).getTagValueString());
+                result.setOpCode(ECCodes.EC_OP_NOOP);
+                t.getSubTagByName(ECCodes.EC_TAG_PARTFILE_NAME).setTagValueString(epReq.getTagByName(ECCodes.EC_TAG_PARTFILE).getSubTagByName(ECCodes.EC_TAG_PARTFILE_NAME).getTagValueString());
             }
         } catch (DataFormatException e1) {
             

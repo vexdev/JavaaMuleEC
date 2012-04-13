@@ -69,15 +69,30 @@ public class ECPacket {
     
 
     public void writeToStream(OutputStream out) throws IOException, ECException  {
-        encodedPacket = new ECRawPacket(this);
+        try {
+            encodedPacket = new ECRawPacket(this);
+        } catch (ECException e) {
+            throw new ECException("Error builbing raw packet", this, e);
+        }
         out.write(encodedPacket.asByteArray());
     }
     
     public static ECPacket readFromStream(InputStream in) throws IOException, ECException {
-        ECRawPacket raw = new ECRawPacket(in);
-        ECPacket n = raw.parse();
-        n.encodedPacket = raw;
-        return n;
+        ECRawPacket raw;
+        try {
+            raw = new ECRawPacket(in);
+        } catch (ECException e) {
+            throw new ECException("Error reading raw packet", e);
+        }
+        ECPacket n;
+        try {
+            n = raw.parse();
+            n.encodedPacket = raw;
+            return n;
+        } catch (ECException e) {
+            throw new ECException("Error parsing raw packet", raw, e);        
+        }
+
     }
     
     

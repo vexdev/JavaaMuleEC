@@ -12,6 +12,7 @@ import com.iukonline.amule.ec.ECException;
 import com.iukonline.amule.ec.ECPacket;
 import com.iukonline.amule.ec.ECRawPacket;
 import com.iukonline.amule.ec.ECTag;
+import com.iukonline.amule.ec.ECTagTypes;
 
 public class ECRawTest {
 
@@ -31,6 +32,7 @@ public class ECRawTest {
 
             System.out.println("------------- REQUEST ---------------------");
             ECRawPacket req = new ECRawPacket(clientStream);
+            req.parse();
             
             System.out.println(req.dump());
             
@@ -39,6 +41,7 @@ public class ECRawTest {
             if (serverStream.available() > 0) {
                 System.out.println("------------- RESPONSE --------------");
                 ECRawPacket resp = new ECRawPacket(serverStream);
+                resp.parse();
                 
                 System.out.println(resp.dump());
                 
@@ -51,7 +54,8 @@ public class ECRawTest {
         ECPacket epReq = new ECPacket();
         epReq.setOpCode(ECCodes.EC_OP_PARTFILE_SWAP_A4AF_THIS);
         byte[] hash = { 0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7, 0x8, 0x9, 0xa, 0xb, 0xc, 0xd, 0xe, 0xf , 0x10};
-        epReq.addTag(new ECTag(ECTag.EC_TAG_PARTFILE, ECTag.EC_TAGTYPE_HASH16, hash));
+        epReq.addTag(new ECTag(ECCodes.EC_TAG_PARTFILE, ECTagTypes.EC_TAGTYPE_HASH16, hash));
+        @SuppressWarnings("unused")
         ECRawPacket raw = new ECRawPacket(epReq);
         
     }

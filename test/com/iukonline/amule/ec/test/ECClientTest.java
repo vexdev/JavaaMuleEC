@@ -14,9 +14,9 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.iukonline.amule.ec.ECClient;
+import com.iukonline.amule.ec.ECCodes;
 import com.iukonline.amule.ec.ECPartFile;
 import com.iukonline.amule.ec.ECStats;
-import com.iukonline.amule.ec.ECUtils;
 
 /**
  * @author ***REMOVED***
@@ -50,7 +50,7 @@ public class ECClientTest {
         cl.setClientVersion("pre-aplha");
         cl.setTracer(System.out);
         
-        socket = new Socket("***REMOVED***", 4712);
+        socket = new Socket(SERVER_HOST, SERVER_PORT);
         cl.setSocket(socket);
         
         //cl.enableUTF8Compression();
@@ -82,26 +82,37 @@ public class ECClientTest {
         
         
         System.out.print("Running fetchDlQueue...\n");
-        ECPartFile[] dlQueue = cl.getDownloadQueue();
+        ECPartFile[] dlQueue = cl.getDownloadQueue(ECCodes.EC_DETAIL_CMD);
         
         if (dlQueue != null) {
             for (int i = 0; i < dlQueue.length; i++) {
                 
-                ECPartFile d = cl.getDownloadDetails(dlQueue[i]);
+                //ECPartFile d = cl.getDownloadDetails(dlQueue[i]);
                 
-                System.out.format("Filename: %s\nHash: %s\nStatus: %d - Done: %d/%d - Speed: %d - Prio: %d\n\n", 
-                                d.getFileName(), 
-                                ECUtils.byteArrayToHexString(d.getHash(), 16),
-                                d.getStatus(),
-                                d.getSizeDone(), 
-                                d.getSizeFull(),
-                                d.getSpeed(),
-                                d.getPrio()
-                                );
+                System.out.println(dlQueue[i].toString());
+                cl.refreshPartFile(dlQueue[i], ECCodes.EC_DETAIL_CMD);
+                
+                
+                
+                
+               /* System.out.format("Filename: %s\nHash: %s\nStatus: %d - Done: %d/%d - Speed: %d - Prio: %d\n\n", 
+                                dlQueue[i].getFileName(), 
+                                ECUtils.byteArrayToHexString(dlQueue[i].getHash(), 16),
+                                dlQueue[i].getStatus(),
+                                dlQueue[i].getSizeDone(), 
+                                dlQueue[i].getSizeFull(),
+                                dlQueue[i].getSpeed(),
+                                dlQueue[i].getPrio()
+                                );*/
             }
             
             //dlQueue[0].swapA4AFThis();
-            dlQueue[0].changePriority(dlQueue[0].getPrio());
+            //dlQueue[0].changePriority(dlQueue[0].getPrio());
+            
+            for (int i = 0; i < dlQueue.length; i++) {
+                if (dlQueue[i].getSourceNames().size() > 0) System.out.println("hasSourceNames --- " + dlQueue[i].toString());
+            }
+            
             
         }
         
@@ -114,9 +125,16 @@ public class ECClientTest {
     
     @Test
     public void getStats() throws Exception {
-        System.out.print("Running get stats...\n");
-        ECStats stats = cl.getStats();
-        if (stats != null) System.out.format("Download rate %d bytes/sec\nUpload rate %d bytes/sec\n", stats.getSpeedDl(), stats.getSpeedUl());
+        System.out.println("Running get stats...");
+        ECStats stats = cl.getStats(ECCodes.EC_DETAIL_FULL);
+        if (stats != null) {
+            System.out.println(stats.toString());
+            System.out.format("isConnectedEd2k: %s, isConnectedKad: %s, isKadRunning: %s, isKadFirewalled: %s\n", 
+                            stats.getConnState().isConnectedEd2k(),
+                            stats.getConnState().isConnectedKad(),
+                            stats.getConnState().isKadRunning(),
+                            stats.getConnState().isKadFirewalled());
+        }
         assertTrue(stats != null);
     }
 

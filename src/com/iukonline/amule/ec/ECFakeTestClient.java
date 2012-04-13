@@ -12,7 +12,7 @@ public class ECFakeTestClient extends ECClient {
         
         if ((epResp.getOpCode() == ECCodes.EC_OP_FAILED) || (tryLogin && epResp.getOpCode() == ECCodes.EC_OP_AUTH_FAIL)) {
             String errMsg = "No error returned.";
-            ECTag tagError = epResp.getTagByName((short) ECTag.EC_TAG_STRING);
+            ECTag tagError = epResp.getTagByName((short) ECCodes.EC_TAG_STRING);
             if (tagError != null) {
                 try {
                     errMsg = tagError.getTagValueString();

@@ -113,7 +113,7 @@ public class ECRawPacket {
         
     }
     
-    public ECRawPacket (ECPacket p) throws ECException {
+    public ECRawPacket (ECPacket p) throws ECException  {
         
         // TODO: UTF-8 Compression
 
@@ -133,7 +133,12 @@ public class ECRawPacket {
         int tagsLen = 0;
         for (int i = 0; i < tags.size(); i++) {
             // TODO Brutto, trovare altra soluzione che non richieda implementazione in ECTag
-            tagsLen += tags.get(i).getLength(true, false);
+            try {
+                tagsLen += tags.get(i).getLength(true, false);
+            } catch (ECException e) {
+                // TODO All getLength exceptions are related to UTF-8, so no need to catch them until UTF-8 Compression is implemented 
+
+            }
         }
         
         

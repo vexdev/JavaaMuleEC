@@ -11,10 +11,10 @@ import com.iukonline.amule.ec.ECRawPacket.ECRawTag;
 
 
 
-public class ECTag implements ECCodes, ECTagTypes {
+public class ECTag  {
     
     private short       tagName; 
-    private byte        tagType = EC_TAGTYPE_UNKNOWN;
+    private byte        tagType = ECTagTypes.EC_TAGTYPE_UNKNOWN;
     
     private int         nestingLevel = 0;
     
@@ -51,7 +51,7 @@ public class ECTag implements ECCodes, ECTagTypes {
     }
     
     public ECTag(short tagName, String tagValue) throws DataFormatException {
-        this(tagName, EC_TAGTYPE_STRING, tagValue);
+        this(tagName, ECTagTypes.EC_TAGTYPE_STRING, tagValue);
     }
 
     public ECTag(short tagName, byte tagType, InetSocketAddress tagValue) throws DataFormatException {
@@ -60,16 +60,16 @@ public class ECTag implements ECCodes, ECTagTypes {
     }
 
     public ECTag(short tagName, InetSocketAddress tagValue) throws DataFormatException {
-        this(tagName, EC_TAGTYPE_IPV4, tagValue);
+        this(tagName, ECTagTypes.EC_TAGTYPE_IPV4, tagValue);
     }
 
     public ECTag(short tagName, byte tagType, byte[] tagValue) throws DataFormatException {
         this(tagName, tagType);
         switch (tagType) {
-        case EC_TAGTYPE_HASH16:
+        case ECTagTypes.EC_TAGTYPE_HASH16:
             setTagValueHash(tagValue);
             break;
-        case EC_TAGTYPE_CUSTOM:
+        case ECTagTypes.EC_TAGTYPE_CUSTOM:
             setTagValueCustom(tagValue);
             break;
         default:
@@ -79,7 +79,7 @@ public class ECTag implements ECCodes, ECTagTypes {
     }
     
     public String getTagValueString() throws DataFormatException {
-        if (this.tagType == EC_TAGTYPE_STRING) {
+        if (this.tagType == ECTagTypes.EC_TAGTYPE_STRING) {
             return tagValueString;
         } else {
             throw new DataFormatException("Tag type is not STRING");
@@ -87,7 +87,7 @@ public class ECTag implements ECCodes, ECTagTypes {
     }
 
     public void setTagValueString(String tagValueString) throws DataFormatException {
-        if (this.tagType == EC_TAGTYPE_STRING) {
+        if (this.tagType == ECTagTypes.EC_TAGTYPE_STRING) {
             this.tagValueString = tagValueString;
         } else {
             throw new DataFormatException("Tag type is not STRING");
@@ -96,10 +96,10 @@ public class ECTag implements ECCodes, ECTagTypes {
 
     public long getTagValueUInt() throws DataFormatException {
         switch (tagType) {
-        case EC_TAGTYPE_UINT8:
-        case EC_TAGTYPE_UINT16:
-        case EC_TAGTYPE_UINT32:
-        case EC_TAGTYPE_UINT64:
+        case ECTagTypes.EC_TAGTYPE_UINT8:
+        case ECTagTypes.EC_TAGTYPE_UINT16:
+        case ECTagTypes.EC_TAGTYPE_UINT32:
+        case ECTagTypes.EC_TAGTYPE_UINT64:
             return tagValueUInt;
         default:
             throw new DataFormatException("Tag type is not UINT*");
@@ -109,10 +109,10 @@ public class ECTag implements ECCodes, ECTagTypes {
 
     public void setTagValueUInt(long tagValueUInt) throws DataFormatException {
         switch (tagType) {
-        case EC_TAGTYPE_UINT8:
-        case EC_TAGTYPE_UINT16:
-        case EC_TAGTYPE_UINT32:
-        case EC_TAGTYPE_UINT64:
+        case ECTagTypes.EC_TAGTYPE_UINT8:
+        case ECTagTypes.EC_TAGTYPE_UINT16:
+        case ECTagTypes.EC_TAGTYPE_UINT32:
+        case ECTagTypes.EC_TAGTYPE_UINT64:
             this.tagValueUInt = tagValueUInt;
             break;
         default:
@@ -122,7 +122,7 @@ public class ECTag implements ECCodes, ECTagTypes {
     }
     
     public InetSocketAddress getTagValueIPv4() throws DataFormatException {
-        if (tagType == EC_TAGTYPE_IPV4) {
+        if (tagType == ECTagTypes.EC_TAGTYPE_IPV4) {
             return tagValueIPv4;
         } else {
             throw new DataFormatException("Tag type is not IPV4");
@@ -130,7 +130,7 @@ public class ECTag implements ECCodes, ECTagTypes {
     }
 
     public void setTagValueIPv4(InetSocketAddress tagValueIPv4) throws DataFormatException {
-        if (tagType == EC_TAGTYPE_IPV4) {
+        if (tagType == ECTagTypes.EC_TAGTYPE_IPV4) {
             this.tagValueIPv4 = tagValueIPv4;
         } else {
             throw new DataFormatException("Tag type is not IPV4");
@@ -138,7 +138,7 @@ public class ECTag implements ECCodes, ECTagTypes {
     }
 
     public byte[] getTagValueHash() throws DataFormatException {
-        if (tagType == EC_TAGTYPE_HASH16) {
+        if (tagType == ECTagTypes.EC_TAGTYPE_HASH16) {
             return tagValueHash;
         } else {
             throw new DataFormatException("Tag type is not HASH16");
@@ -146,7 +146,7 @@ public class ECTag implements ECCodes, ECTagTypes {
     }
 
     public void setTagValueHash(byte[] tagValueHash) throws DataFormatException {
-        if (tagType == EC_TAGTYPE_HASH16) {
+        if (tagType == ECTagTypes.EC_TAGTYPE_HASH16) {
             this.tagValueHash = tagValueHash;
         } else {
             throw new DataFormatException("Tag type is not HASH16");
@@ -154,7 +154,7 @@ public class ECTag implements ECCodes, ECTagTypes {
     }
 
     public byte[] getTagValueCustom() throws DataFormatException {
-        if (tagType == EC_TAGTYPE_CUSTOM) {
+        if (tagType == ECTagTypes.EC_TAGTYPE_CUSTOM) {
             return tagValueCustom;
         } else {
             throw new DataFormatException("Tag type is not CUSTOM");
@@ -163,7 +163,7 @@ public class ECTag implements ECCodes, ECTagTypes {
     }
 
     public void setTagValueCustom(byte[] tagValueCustom) throws DataFormatException {
-        if (tagType == EC_TAGTYPE_CUSTOM) {
+        if (tagType == ECTagTypes.EC_TAGTYPE_CUSTOM) {
             this.tagValueCustom = tagValueCustom;
         } else {
             throw new DataFormatException("Tag type is not CUSTOM");
@@ -172,7 +172,7 @@ public class ECTag implements ECCodes, ECTagTypes {
     }
     
     public void setTagValueDouble(double tagValueDouble) throws DataFormatException {
-        if (tagType == EC_TAGTYPE_DOUBLE) {
+        if (tagType == ECTagTypes.EC_TAGTYPE_DOUBLE) {
             this.tagValueDouble = tagValueDouble;
         } else {
             throw new DataFormatException("Tag type is not DOUBLE");
@@ -180,7 +180,7 @@ public class ECTag implements ECCodes, ECTagTypes {
     }
     
     public double getTagValueDouble() throws DataFormatException {
-        if (tagType == EC_TAGTYPE_DOUBLE) {
+        if (tagType == ECTagTypes.EC_TAGTYPE_DOUBLE) {
             return tagValueDouble;
         } else {
             throw new DataFormatException("Tag type is not DOUBLE");
@@ -203,15 +203,15 @@ public class ECTag implements ECCodes, ECTagTypes {
 
     public void setTagType(byte tagType) throws DataFormatException {
         switch (tagType) {
-        case EC_TAGTYPE_CUSTOM:
-        case EC_TAGTYPE_UINT8:
-        case EC_TAGTYPE_UINT16:
-        case EC_TAGTYPE_UINT32:
-        case EC_TAGTYPE_UINT64:
-        case EC_TAGTYPE_STRING:
-        case EC_TAGTYPE_IPV4:
-        case EC_TAGTYPE_HASH16:
-        case EC_TAGTYPE_DOUBLE:
+        case ECTagTypes.EC_TAGTYPE_CUSTOM:
+        case ECTagTypes.EC_TAGTYPE_UINT8:
+        case ECTagTypes.EC_TAGTYPE_UINT16:
+        case ECTagTypes.EC_TAGTYPE_UINT32:
+        case ECTagTypes.EC_TAGTYPE_UINT64:
+        case ECTagTypes.EC_TAGTYPE_STRING:
+        case ECTagTypes.EC_TAGTYPE_IPV4:
+        case ECTagTypes.EC_TAGTYPE_HASH16:
+        case ECTagTypes.EC_TAGTYPE_DOUBLE:
             this.tagType = tagType;
             break;
         default:
@@ -247,7 +247,7 @@ public class ECTag implements ECCodes, ECTagTypes {
         return null;
     }
     
-    public long getLength(boolean withHeader, boolean isUTF8Compressed) throws ECException  {
+    public long getLength(boolean withHeader, boolean isUTF8Compressed) throws ECException   {
         
         //long len = withHeader ? 7 : 0; // ec_tagname_t - uint16, ec_tagtype_t - uint8, ec_taglen_t - uint32
         long len = 0L;
@@ -270,37 +270,37 @@ public class ECTag implements ECCodes, ECTagTypes {
         }
         
         switch (tagType) {
-        case EC_TAGTYPE_CUSTOM:
+        case ECTagTypes.EC_TAGTYPE_CUSTOM:
             if (tagValueCustom != null) {
                 len += tagValueCustom.length;
             }
             break;
-        case EC_TAGTYPE_UINT8:
+        case ECTagTypes.EC_TAGTYPE_UINT8:
             len += 1;
             break;
-        case EC_TAGTYPE_UINT16:
+        case ECTagTypes.EC_TAGTYPE_UINT16:
             len += 2;
             break;
-        case EC_TAGTYPE_UINT32:
+        case ECTagTypes.EC_TAGTYPE_UINT32:
             len += 4;
             break;
-        case EC_TAGTYPE_UINT64:
+        case ECTagTypes.EC_TAGTYPE_UINT64:
             len += 8;
             break;
-        case EC_TAGTYPE_STRING:
+        case ECTagTypes.EC_TAGTYPE_STRING:
             try {
                 len += tagValueString.getBytes("UTF-8").length + 1;
             } catch (UnsupportedEncodingException e) {
                 throw new ECException("Severe error: UTF-8 not supported for string encoding", e);
             }
             break;
-        case EC_TAGTYPE_DOUBLE:
+        case ECTagTypes.EC_TAGTYPE_DOUBLE:
             // TODO Implement this. Today won't happen as DOUBLE trhows execption in set method
             break;
-        case EC_TAGTYPE_IPV4:
+        case ECTagTypes.EC_TAGTYPE_IPV4:
             len += 4; 
             break;
-        case EC_TAGTYPE_HASH16:
+        case ECTagTypes.EC_TAGTYPE_HASH16:
             len += 16;
             break;
         default:
@@ -360,40 +360,40 @@ public class ECTag implements ECCodes, ECTagTypes {
         String value;
 
         switch (tagType) {
-        case EC_TAGTYPE_CUSTOM:
+        case ECTagTypes.EC_TAGTYPE_CUSTOM:
             type = "CUSTOM";
             value = ECUtils.byteArrayToHexString(tagValueCustom);
             break;
-        case EC_TAGTYPE_UINT8:
+        case ECTagTypes.EC_TAGTYPE_UINT8:
             type = "UINT8";
             value = Long.toString(tagValueUInt);
             break;
-        case EC_TAGTYPE_UINT16:
+        case ECTagTypes.EC_TAGTYPE_UINT16:
             type = "UINT16";
             value = Long.toString(tagValueUInt);
             break;
-        case EC_TAGTYPE_UINT32:
+        case ECTagTypes.EC_TAGTYPE_UINT32:
             type = "UINT32";
             value = Long.toString(tagValueUInt);
             break;
-        case EC_TAGTYPE_UINT64:
+        case ECTagTypes.EC_TAGTYPE_UINT64:
             type = "UINT64";
             value = Long.toString(tagValueUInt);
             break;
-        case EC_TAGTYPE_STRING:
+        case ECTagTypes.EC_TAGTYPE_STRING:
             type = "STRING";
             value = tagValueString;
             break;
-        case EC_TAGTYPE_DOUBLE:
+        case ECTagTypes.EC_TAGTYPE_DOUBLE:
             // TODO
             type = "DOUBLE";
             value = "DONT KNOW HOW TO DECODE";
             break;
-        case EC_TAGTYPE_IPV4:
+        case ECTagTypes.EC_TAGTYPE_IPV4:
             type = "IPV4";
             value = tagValueIPv4.toString();
             break;
-        case EC_TAGTYPE_HASH16:
+        case ECTagTypes.EC_TAGTYPE_HASH16:
             type = "HASH16";
             value = ECUtils.byteArrayToHexString(tagValueHash);
             break;
