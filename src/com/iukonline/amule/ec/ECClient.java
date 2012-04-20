@@ -241,18 +241,12 @@ public class ECClient {
                 throw new ECException("Error building ECPartFile object", partFilePacket, e);
             }
         }
-        
         return dlQueue;
     }
     
     public ECPartFile[] getDownloadQueue() throws IOException, ECException {
         return getDownloadQueue(defaultDetailLevel);
     }
-    
-    
-    
-    
-    
     
 
     
@@ -280,10 +274,11 @@ public class ECClient {
         }
         
     }
+
+    
     
     void changeDownloadStatus(byte[] hash, byte opCode) throws ECException, IOException {
 
-        
         ECPacket epReq = new ECPacket();
         epReq.setOpCode(opCode);
         try {
@@ -293,26 +288,16 @@ public class ECClient {
             throw new ECException("Error creating request", epReq, e);
         }
         
-        
         ECPacket epResp = sendRequestAndWaitResponse(epReq);
         switch (epResp.getOpCode()) {
         case ECCodes.EC_OP_NOOP:
             // TODO Do something?
             return;
         default:
-            throw new ECException("Unexpected response download queue request", epResp);        
+            throw new ECException("Unexpected response to change download status request", epResp);        
         }
         
     }
-    
-
-    
-    
-
-    
-    
-    // TODO: Rivedere questi e gestire A4AF, delete, pause, resume...
-    
 
     
     public void addED2KLink(String url) throws ECException, IOException {
@@ -333,12 +318,6 @@ public class ECClient {
     }
 
     
-    
-    
-    
-
-    
-    
     public void renamePartFile(byte[] hash, String newName) throws ECException, IOException {
         ECPacket epReq = new ECPacket();
         epReq.setOpCode(ECCodes.EC_OP_RENAME_FILE);
@@ -355,7 +334,7 @@ public class ECClient {
             // TODO Do something?
             return;
         default:
-            throw new ECException("Rename Part File", epResp);        
+            throw new ECException("Error while renaming Part File", epResp);        
         }        
     }
     
@@ -381,6 +360,107 @@ public class ECClient {
             throw new ECException("Unexpected response to set priority", epResp);        
         }
     }
+    
+
+    
+    public ECCategory[] getCategories(byte detailLevel) throws IOException, ECException {
+        
+        ECPacket epReq = new ECPacket();
+        epReq.setOpCode(ECCodes.EC_OP_GET_PREFERENCES);
+        try {
+            epReq.addTag(new ECTag(ECCodes.EC_TAG_SELECT_PREFS, ECTagTypes.EC_TAGTYPE_UINT32, ECCodes.EC_PREFS_CATEGORIES));
+            epReq.addTag(new ECTag(ECCodes.EC_TAG_DETAIL_LEVEL, ECTagTypes.EC_TAGTYPE_UINT8, detailLevel));
+        } catch (DataFormatException e) {
+            throw new ECException("Severe Exception. This should never happen", epReq, e);
+
+        }
+      
+        ECPacket epResp = sendRequestAndWaitResponse(epReq);
+        switch (epResp.getOpCode()) {
+        case ECCodes.EC_OP_SET_PREFERENCES:
+
+            ECTag t = epResp.getTagByName(ECCodes.EC_TAG_PREFS_CATEGORIES);
+            if (t == null) return null;
+            
+            ArrayList <ECTag> l = t.getSubTags();
+            if (l.size() == 0) return null;
+            
+            ECCategory[] categoryList = new ECCategory[l.size()];
+            for (int i = 0; i < l.size(); i++) {
+                ECTag t1 = l.get(i);
+                if (t1.getTagName() != ECCodes.EC_TAG_CATEGORY) throw new ECException("Unexpected tag " + t1.getTagName() + " found while looking for EC_TAG_CATEGORY", epResp);
+                try {
+                    categoryList[i] = new ECCategory(t1, detailLevel);
+                } catch (ECException e) {
+                    throw new ECException("Error while building ECCategory Object", epResp, e);
+                }
+            }
+            return categoryList;
+            
+        default:
+            throw new ECException("Unexpected response to get categories", epResp);        
+            
+        }
+    }
+    
+    
+    public void createCategory(ECCategory c) throws ECException, IOException {
+        ECPacket epReq = new ECPacket();
+        epReq.setOpCode(ECCodes.EC_OP_CREATE_CATEGORY);
+        epReq.addTag(c.toECTag());
+
+        ECPacket epResp = sendRequestAndWaitResponse(epReq);
+        switch (epResp.getOpCode()) {
+        case ECCodes.EC_OP_NOOP:
+            // TODO Do something?
+            return;
+        default:
+            throw new ECException("Unexpected response to create category", epResp);        
+        }
+    }
+    
+    public void updateCategory(ECCategory c) throws ECException, IOException {
+        ECPacket epReq = new ECPacket();
+        epReq.setOpCode(ECCodes.EC_OP_UPDATE_CATEGORY);
+        epReq.addTag(c.toECTag());
+        
+        ECPacket epResp = sendRequestAndWaitResponse(epReq);
+        switch (epResp.getOpCode()) {
+        case ECCodes.EC_OP_NOOP:
+            // TODO Do something?
+            return;
+        default:
+            throw new ECException("Unexpected response to update category", epResp);        
+        }
+    }
+    
+    public void deleteCategory(long id) throws ECException, IOException {
+        ECPacket epReq = new ECPacket();
+        epReq.setOpCode(ECCodes.EC_OP_DELETE_CATEGORY);
+        try {
+            epReq.addTag(new ECTag(ECCodes.EC_TAG_CATEGORY, ECTagTypes.EC_TAGTYPE_UINT32, id));
+        } catch (DataFormatException e) {
+            throw new ECException("Severe Exception. This should never happen", epReq, e);
+        }
+      
+        ECPacket epResp = sendRequestAndWaitResponse(epReq);
+        switch (epResp.getOpCode()) {
+        case ECCodes.EC_OP_NOOP:
+            // TODO Do something?
+            return;
+        default:
+            throw new ECException("Unexpected response to delete category", epResp);        
+        }
+    }
+    
+    
+    
+    
+    
+    
+    
+    
+    
 
     @Override
     public String toString() {

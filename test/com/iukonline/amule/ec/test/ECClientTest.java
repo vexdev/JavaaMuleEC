@@ -13,6 +13,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import com.iukonline.amule.ec.ECCategory;
 import com.iukonline.amule.ec.ECClient;
 import com.iukonline.amule.ec.ECCodes;
 import com.iukonline.amule.ec.ECPartFile;
@@ -137,5 +138,54 @@ public class ECClientTest {
         }
         assertTrue(stats != null);
     }
+    
+    @Test
+    public void testCategories() throws Exception {
+        String comment = "TEST CATEGORY FOR ECClientTest";
+        System.out.println("Adding test category...");
+        
+        cl.createCategory(new ECCategory("ECClientTest", "/share/Download/", comment, ECPartFile.PR_HIGH, (byte)0xff0000));
+        
+        System.out.println("Running get categories...");
+        ECCategory[] catList = cl.getCategories(ECCodes.EC_DETAIL_FULL);
+        ECCategory newCat = null;
+        
+        if (catList != null) {
+            for (int i = 0; i < catList.length; i++) {
+                System.out.println(catList[i].toString());
+                if (catList[i].getComment().equals(comment)) newCat = catList[i];
+            }
+        }
+        
+        if (newCat != null) {
+            newCat.setComment("UDPATED!");
+            System.out.println("Updating test category...");
+            cl.updateCategory(newCat);
+            
+            System.out.println("Running get categories...");
+            catList = cl.getCategories(ECCodes.EC_DETAIL_FULL);
+            
+            for (int i = 0; i < catList.length; i++) {
+                System.out.println(catList[i].toString());
+            }
+            
+            System.out.println("Deleting test category...");
+            cl.deleteCategory(newCat.getId());
+
+            System.out.println("Running get categories...");
+            catList = cl.getCategories(ECCodes.EC_DETAIL_FULL);
+            
+            for (int i = 0; i < catList.length; i++) {
+                System.out.println(catList[i].toString());
+            }
+        }
+        
+        assertTrue(newCat != null);
+        
+
+        
+    }
+    
+    
 
 }
