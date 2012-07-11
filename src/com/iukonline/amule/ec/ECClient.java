@@ -9,12 +9,23 @@ import java.net.Socket;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.zip.DataFormatException;
+
+import com.iukonline.amule.ec.exceptions.ECClientException;
+import com.iukonline.amule.ec.exceptions.ECPacketParsingException;
+import com.iukonline.amule.ec.exceptions.ECServerException;
+import com.iukonline.amule.ec.exceptions.ECTagParsingException;
 
 
 
 
 public class ECClient {
+    
+    private final static boolean FORCE_TRY_LOGIN_BEFORE = true; 
+    // Must be true to ensure compatibiliy with 2.2.2.
+    // 2.2.2 Close TCP socket when receiving unauthenticated request
 
     private byte defaultDetailLevel = ECCodes.EC_DETAIL_FULL;
     
@@ -25,6 +36,8 @@ public class ECClient {
     private PrintStream tracer;
     
     private String serverVersion;
+    
+    private boolean isLoggedIn = false;
     
     public void setClientName(String clientName) {
         this.clientName = clientName;
@@ -56,17 +69,17 @@ public class ECClient {
         return serverVersion;
     }
     
-    
-    
-    public ECPacket sendRequestAndWaitResponse(ECPacket epReq, boolean tryLogin) throws IOException, ECException {
+    public ECPacket sendRequestAndWaitResponse(ECPacket epReq, boolean tryLogin) throws IOException, ECPacketParsingException, ECServerException, ECClientException {
 
+        if (FORCE_TRY_LOGIN_BEFORE && tryLogin && !isLoggedIn) login();
+        
         OutputStream os = socket.getOutputStream();
         if (tracer != null) tracer.print("Sending EC packet...\n" + epReq.toString() + "\n\n");
 
         try {
             epReq.writeToStream(os);
-        } catch (ECException e) {
-            throw new ECException("Error sending request", epReq, e);
+        } catch (ECPacketParsingException e) {
+            throw new ECPacketParsingException("Error sending request", epReq.getRawPacket(), e);
         }
         if (tracer != null) tracer.print("Sent EC packet...\n" + epReq.toString() + "\n\n");
 
@@ -75,14 +88,13 @@ public class ECClient {
         ECPacket epResp;
         try {
             epResp = ECPacket.readFromStream(is);
-        } catch (ECException e) {
-            throw new ECException("Error reading response", epReq, e);
+        } catch (ECPacketParsingException e) {
+            throw new ECPacketParsingException("Error reading response", e.getCausePacket(), e);
         }
         
         if (tracer != null) tracer.print("Received EC packet...\n" + epResp.toString() + "\n\n");
         
-        if ((epResp.getOpCode() == ECCodes.EC_OP_FAILED) || (tryLogin && epResp.getOpCode() == ECCodes.EC_OP_AUTH_FAIL)) {
-            
+        if (epResp.getOpCode() == ECCodes.EC_OP_FAILED) {
             
             String errMsg = "No error returned.";
             ECTag tagError = epResp.getTagByName((short) ECCodes.EC_TAG_STRING);
@@ -90,36 +102,24 @@ public class ECClient {
                 try {
                     errMsg = tagError.getTagValueString();
                 } catch (DataFormatException e) {
-                    throw new ECException("Cannot read returned error message", epResp, e);
-                }
-            }
-            if (tryLogin && epResp.getOpCode() == ECCodes.EC_OP_AUTH_FAIL) {
-                boolean result = false;
-
-                try {
-                    result = this.login();
-                } catch (ECException e) {
-                    throw new ECException("Error while logging in", e);
-                }
-                if (result) {
-                    return this.sendRequestAndWaitResponse(epReq, false);
+                    throw new ECPacketParsingException("Cannot read returned error message", epResp.getRawPacket(), e);
                 }
             }
             
-            throw new ECException("Request failed: " + errMsg);
+            throw new ECServerException(errMsg, epReq, epResp);
         }
         
         return epResp;
 
     }
     
-    public ECPacket sendRequestAndWaitResponse(ECPacket epReq) throws IOException, ECException {
+    public ECPacket sendRequestAndWaitResponse(ECPacket epReq) throws IOException, ECPacketParsingException, ECServerException, ECClientException {
         return sendRequestAndWaitResponse(epReq, true);
     }
     
     
 
-    public boolean login() throws IOException, ECException  {
+    public boolean login() throws IOException, ECPacketParsingException, ECServerException, ECClientException  {
         
         ECPacket epReq = new ECPacket();
         epReq.setOpCode(ECCodes.EC_OP_AUTH_REQ);
@@ -129,46 +129,49 @@ public class ECClient {
             epReq.addTag(new ECTag(ECCodes.EC_TAG_PROTOCOL_VERSION, ECTagTypes.EC_TAGTYPE_UINT16, (long) ECCodes.EC_CURRENT_PROTOCOL_VERSION));
             epReq.addTag(new ECTag(ECCodes.EC_TAG_PASSWD_HASH, ECTagTypes.EC_TAGTYPE_HASH16, hashedPassword));
         } catch (DataFormatException e) {
-            throw new ECException("Severe error, this should never happen here", epReq, e);
+            throw new ECClientException("Cannot create login request", e);
         }
         
         ECPacket epResp = sendRequestAndWaitResponse(epReq, false);
         switch (epResp.getOpCode()) {
         case ECCodes.EC_OP_AUTH_OK:
             ECTag versionTag = epResp.getTagByName(ECCodes.EC_TAG_SERVER_VERSION);
-            if (versionTag == null) throw new ECException("Server version not present in auth response", epResp);
+            if (versionTag == null) throw new ECPacketParsingException("Server version not present in auth response", epResp.getRawPacket());
             try {
                 serverVersion = versionTag.getTagValueString();
             } catch (DataFormatException e) {
-                throw new ECException("Unexpected format for server version", epResp, e);
+                throw new ECPacketParsingException("Unexpected format for server version", epResp.getRawPacket(), e);
             }            
+            isLoggedIn = true;
             return true;
         case ECCodes.EC_OP_AUTH_FAIL:
-            return false;
+            String errMsg = "No error returned.";
+            ECTag tagError = epResp.getTagByName((short) ECCodes.EC_TAG_STRING);
+            if (tagError != null) {
+                try {
+                    errMsg = tagError.getTagValueString();
+                } catch (DataFormatException e) {
+                    throw new ECPacketParsingException("Cannot read returned error message", epResp.getRawPacket(), e);
+                }
+            }
+            throw new ECServerException("Login failed - " + errMsg, epReq, epResp);
         default:
-            throw new ECException("Unexpected response to login request", epResp);
+            throw new ECPacketParsingException("Unexpected response to login request", epResp.getRawPacket());
         }
     }
     
     
+
     
     
-    
-    
-    
-    
-    
-    
-    
-    
-    private ECPacket sendGetDloadQueueReq(byte[] hash, byte detailLevel) throws IOException, ECException {
+    private ECPacket sendGetDloadQueueReq(byte[] hash, byte detailLevel) throws IOException, ECClientException, ECPacketParsingException, ECServerException {
             ECPacket epReq = new ECPacket();
             
             try {
                 epReq.addTag(new ECTag(ECCodes.EC_TAG_DETAIL_LEVEL, ECTagTypes.EC_TAGTYPE_UINT8, detailLevel));
             } catch (DataFormatException e) {
                 // Should nevere happen
-                throw new ECException("Severe exception. This should never have been happened.", e);
+                throw new ECClientException("Cannot greate GetDloadQueue request", e);
             }
             
             if (hash != null) {
@@ -176,85 +179,118 @@ public class ECClient {
                 try {
                     epReq.addTag(new ECTag(ECCodes.EC_TAG_PARTFILE, ECTagTypes.EC_TAGTYPE_HASH16, hash ));
                 } catch (DataFormatException e) {
-                    throw new ECException("Invalid hash provided", epReq, e);
+                    throw new ECClientException("Invalid hash provided", e);
                 }
             } else {
                 epReq.setOpCode(ECCodes.EC_OP_GET_DLOAD_QUEUE);
             }
             
             ECPacket epResp;
-            try {
-                epResp = sendRequestAndWaitResponse(epReq);
-            } catch (ECException e) {
-                throw new ECException("Error fetching download queue", e);
+            epResp = sendRequestAndWaitResponse(epReq);
 
-            }
             
             switch (epResp.getOpCode()) {
             case ECCodes.EC_OP_DLOAD_QUEUE:
-                if (hash != null && epResp.getTags().size() > 1) throw new ECException("Unexpected response for single part file GET_DLOAD_QUEUE", epResp);
+                if (hash != null && epResp.getTags().size() > 1) throw new ECPacketParsingException("Unexpected response for single part file GET_DLOAD_QUEUE", epResp.getRawPacket());
                 return epResp;
             default:
-                throw new ECException("Unexpected response for GET_DLOAD_QUEUE", epResp);
+                throw new ECPacketParsingException("Unexpected response for GET_DLOAD_QUEUE", epResp.getRawPacket());
             }        
     }
     
-    public ECPartFile getPartFile(byte[] hash, byte detailLevel) throws IOException, ECException {
+    public ECPartFile getPartFile(byte[] hash, byte detailLevel) throws IOException, ECClientException, ECPacketParsingException, ECServerException {
         ECPacket partFilePacket = sendGetDloadQueueReq(hash, detailLevel);
         try {
             return (partFilePacket.getTags().size() == 0) ? null : new ECPartFile(partFilePacket.getTagByName(ECCodes.EC_TAG_PARTFILE), detailLevel);
-        } catch (ECException e) {
-            throw new ECException("Error building ECPartFile object", partFilePacket, e);
+        } catch (ECTagParsingException e) {
+            throw new ECPacketParsingException("Error parsing partFile packet", partFilePacket.getRawPacket(), e);
         }
     }
     
-    public ECPartFile getPartFile(byte[] hash) throws IOException, ECException {
+    public ECPartFile getPartFile(byte[] hash) throws IOException, ECClientException, ECPacketParsingException, ECServerException {
         return getPartFile(hash, defaultDetailLevel);
     }
     
-    public void refreshPartFile(ECPartFile p, byte detailLevel) throws ECException, IOException {
+    public void refreshPartFile(ECPartFile p, byte detailLevel) throws IOException, ECClientException, ECPacketParsingException, ECServerException {
         ECPacket partFilePacket = sendGetDloadQueueReq(p.getHash(), detailLevel);
-        if (partFilePacket.getTags().isEmpty()) throw new ECException("Part file not found", partFilePacket);
+        if (partFilePacket.getTags().isEmpty()) throw new ECClientException("Part file not found");
         try {
             p.fillFromTag(partFilePacket.getTagByName(ECCodes.EC_TAG_PARTFILE), detailLevel);
-        } catch (ECException e) {
-            throw new ECException("Error refreshing ECPartFile object", partFilePacket, e);
+        } catch (ECTagParsingException e) {
+            throw new ECPacketParsingException("Error parsing partFile packet", partFilePacket.getRawPacket(), e);
         }
+
     }
     
-    public void refreshPartFile(ECPartFile p) throws ECException, IOException {
+    public void refreshPartFile(ECPartFile p) throws IOException, ECClientException, ECPacketParsingException, ECServerException {
         refreshPartFile(p, defaultDetailLevel);
     }
     
-    public ECPartFile[] getDownloadQueue(byte detailLevel) throws IOException, ECException {
+    public HashMap<String, ECPartFile> getDownloadQueue(byte detailLevel) throws IOException, ECClientException, ECPacketParsingException, ECServerException {
         ECPacket partFilePacket = sendGetDloadQueueReq(null, detailLevel);
         
         ArrayList <ECTag> tags = partFilePacket.getTags();
         if (tags.isEmpty()) return null;
         
-        ECPartFile[] dlQueue = new ECPartFile[tags.size()];
+        HashMap<String, ECPartFile> dlQueue = new HashMap<String, ECPartFile>(tags.size());
         
         for (int i = 0; i < tags.size(); i++) {
+            ECPartFile p;
             try {
-                dlQueue[i] = new ECPartFile(tags.get(i), detailLevel);
-            } catch (ECException e) {
-                throw new ECException("Error building ECPartFile object", partFilePacket, e);
+                p = new ECPartFile(tags.get(i), detailLevel);
+            } catch (ECTagParsingException e) {
+                throw new ECPacketParsingException("Error parsing partFile packet", partFilePacket.getRawPacket(), e);
             }
+            dlQueue.put(ECUtils.byteArrayToHexString(p.getHash()), p);
         }
         return dlQueue;
     }
     
-    public ECPartFile[] getDownloadQueue() throws IOException, ECException {
+    public HashMap<String, ECPartFile> getDownloadQueue() throws IOException, ECClientException, ECPacketParsingException, ECServerException {
         return getDownloadQueue(defaultDetailLevel);
     }
     
-
+    public void refreshDlQueue(HashMap<String, ECPartFile> previousQueue) throws IOException, ECClientException, ECPacketParsingException, ECServerException {
+        refreshDlQueue(previousQueue, defaultDetailLevel);
+    }
     
-    public ECStats getStats() throws IOException, ECException {
+    public void refreshDlQueue(HashMap<String, ECPartFile> previousQueue, byte detailLevel) throws IOException, ECClientException, ECPacketParsingException, ECServerException {
+        
+        if (previousQueue == null) return;
+        
+        HashMap<String, ECPartFile> newQueue = getDownloadQueue(defaultDetailLevel);
+        ArrayList <String> hashesToBeRemoved = new ArrayList<String>();
+        
+        Iterator<ECPartFile> iPrev = previousQueue.values().iterator();
+        while (iPrev.hasNext()) {
+            ECPartFile p = iPrev.next();
+            String hString = p.getHashAsString();
+            if (newQueue.containsKey(hString)) {
+                p.copyValuesFromPartFile(newQueue.get(hString));
+                newQueue.remove(hString);
+            } else {
+                hashesToBeRemoved.add(hString);
+            }
+        }
+        
+        Iterator<String> iRemove = hashesToBeRemoved.iterator();
+        while (iRemove.hasNext()) {
+            previousQueue.remove(iRemove.next());
+        }
+        
+        Iterator<ECPartFile> iNew = newQueue.values().iterator();
+        while (iNew.hasNext()) {
+            ECPartFile p = iNew.next();
+            previousQueue.put(p.getHashAsString(), p);
+        }
+        
+    }
+    
+    public ECStats getStats() throws IOException, ECClientException, ECPacketParsingException, ECServerException {
         return getStats(defaultDetailLevel);
     }
     
-    public ECStats getStats(byte detailLevel) throws IOException, ECException  {
+    public ECStats getStats(byte detailLevel) throws IOException, ECClientException, ECPacketParsingException, ECServerException  {
         
         ECPacket epReq = new ECPacket();
         epReq.setOpCode(ECCodes.EC_OP_STAT_REQ);
@@ -262,22 +298,25 @@ public class ECClient {
         try {
             epReq.addTag(new ECTag(ECCodes.EC_TAG_DETAIL_LEVEL, ECTagTypes.EC_TAGTYPE_UINT8, detailLevel));
         } catch (DataFormatException e) {
-            throw new ECException("Severe error: unable to set detail level on request.", epReq, e);
+            throw new ECClientException("Cannot build get stats request", e);
         }
         
         ECPacket epResp = sendRequestAndWaitResponse(epReq);
         switch (epResp.getOpCode()) {
         case ECCodes.EC_OP_STATS:
-            return new ECStats(epResp, detailLevel);
+            try {
+                return new ECStats(epResp, detailLevel);
+            } catch (ECTagParsingException e) {
+                throw new ECPacketParsingException("Error parsing response to OP_STAT_REQ", epResp.getRawPacket(), e);
+            }
         default:
-            throw new ECException("Unexpected response to OP_STAT_REQ", epResp);
+            throw new ECPacketParsingException("Unexpected response to OP_STAT_REQ", epResp.getRawPacket());
         }
         
     }
 
     
-    
-    void changeDownloadStatus(byte[] hash, byte opCode) throws ECException, IOException {
+    public void changeDownloadStatus(byte[] hash, byte opCode) throws IOException, ECClientException, ECPacketParsingException, ECServerException {
 
         ECPacket epReq = new ECPacket();
         epReq.setOpCode(opCode);
@@ -285,7 +324,7 @@ public class ECClient {
             epReq.addTag(new ECTag(ECCodes.EC_TAG_PARTFILE, ECTagTypes.EC_TAGTYPE_HASH16, hash));
         } catch (DataFormatException e) {
            
-            throw new ECException("Error creating request", epReq, e);
+            throw new ECClientException("Cannot create change download status request", e);
         }
         
         ECPacket epResp = sendRequestAndWaitResponse(epReq);
@@ -294,38 +333,36 @@ public class ECClient {
             // TODO Do something?
             return;
         default:
-            throw new ECException("Unexpected response to change download status request", epResp);        
+            throw new ECPacketParsingException("Unexpected response to change download status request", epResp.getRawPacket());        
         }
-        
     }
 
-    
-    public void addED2KLink(String url) throws ECException, IOException {
+    public void addED2KLink(String url) throws IOException, ECClientException, ECPacketParsingException, ECServerException {
         ECPacket epReq = new ECPacket();
         epReq.setOpCode(ECCodes.EC_OP_ADD_LINK);
         try {
             epReq.addTag(new ECTag(ECCodes.EC_TAG_PARTFILE_ED2K_LINK, ECTagTypes.EC_TAGTYPE_STRING, url));
         } catch (DataFormatException e) {
-            throw new ECException("Invalid string provided", epReq, e);
+            throw new ECClientException("Invalid URI provided", e);
         }
         ECPacket epResp = sendRequestAndWaitResponse(epReq);
         switch (epResp.getOpCode()) {
         case ECCodes.EC_OP_NOOP:
             return;
         default:
-            throw new ECException("Unexpected response download queue request", epResp);        
+            throw new ECPacketParsingException("Unexpected response to add link request", epResp.getRawPacket());        
         }
     }
 
     
-    public void renamePartFile(byte[] hash, String newName) throws ECException, IOException {
+    public void renamePartFile(byte[] hash, String newName) throws IOException, ECClientException, ECPacketParsingException, ECServerException {
         ECPacket epReq = new ECPacket();
         epReq.setOpCode(ECCodes.EC_OP_RENAME_FILE);
         try {
             epReq.addTag(new ECTag(ECCodes.EC_TAG_KNOWNFILE, ECTagTypes.EC_TAGTYPE_HASH16, hash));
             epReq.addTag(new ECTag(ECCodes.EC_TAG_PARTFILE_NAME, ECTagTypes.EC_TAGTYPE_STRING, newName));
         } catch (DataFormatException e) {
-            throw new ECException("Error creating request", epReq, e);
+            throw new ECClientException("Error creating rename request", e);
         }
         
         ECPacket epResp = sendRequestAndWaitResponse(epReq);
@@ -334,12 +371,12 @@ public class ECClient {
             // TODO Do something?
             return;
         default:
-            throw new ECException("Error while renaming Part File", epResp);        
+            throw new ECPacketParsingException("Unexpected response to rename request", epResp.getRawPacket());        
         }        
     }
     
     
-    public void setPartFilePriority(byte[] hash, byte prio) throws ECException, IOException {
+    public void setPartFilePriority(byte[] hash, byte prio) throws IOException, ECClientException, ECPacketParsingException, ECServerException {
         ECPacket epReq = new ECPacket();
         epReq.setOpCode(ECCodes.EC_OP_PARTFILE_PRIO_SET);
         try {
@@ -348,7 +385,7 @@ public class ECClient {
             epReq.addTag(t);
             
         } catch (DataFormatException e) {
-            throw new ECException("Error creating request", epReq, e);
+            throw new ECClientException("Cannot create set priorityrequest", e);
         }
         
         ECPacket epResp = sendRequestAndWaitResponse(epReq);
@@ -357,13 +394,13 @@ public class ECClient {
             // TODO Do something?
             return;
         default:
-            throw new ECException("Unexpected response to set priority", epResp);        
+            throw new ECPacketParsingException("Unexpected response to set priority", epResp.getRawPacket());        
         }
     }
     
 
     
-    public ECCategory[] getCategories(byte detailLevel) throws IOException, ECException {
+    public ECCategory[] getCategories(byte detailLevel) throws IOException, ECClientException, ECPacketParsingException, ECServerException {
         
         ECPacket epReq = new ECPacket();
         epReq.setOpCode(ECCodes.EC_OP_GET_PREFERENCES);
@@ -371,8 +408,7 @@ public class ECClient {
             epReq.addTag(new ECTag(ECCodes.EC_TAG_SELECT_PREFS, ECTagTypes.EC_TAGTYPE_UINT32, ECCodes.EC_PREFS_CATEGORIES));
             epReq.addTag(new ECTag(ECCodes.EC_TAG_DETAIL_LEVEL, ECTagTypes.EC_TAGTYPE_UINT8, detailLevel));
         } catch (DataFormatException e) {
-            throw new ECException("Severe Exception. This should never happen", epReq, e);
-
+            throw new ECClientException("Cannot create get categories request", e);
         }
       
         ECPacket epResp = sendRequestAndWaitResponse(epReq);
@@ -388,23 +424,23 @@ public class ECClient {
             ECCategory[] categoryList = new ECCategory[l.size()];
             for (int i = 0; i < l.size(); i++) {
                 ECTag t1 = l.get(i);
-                if (t1.getTagName() != ECCodes.EC_TAG_CATEGORY) throw new ECException("Unexpected tag " + t1.getTagName() + " found while looking for EC_TAG_CATEGORY", epResp);
+                if (t1.getTagName() != ECCodes.EC_TAG_CATEGORY) throw new ECPacketParsingException("Unexpected tag " + t1.getTagName() + " found while looking for EC_TAG_CATEGORY", epResp.getRawPacket());
                 try {
                     categoryList[i] = new ECCategory(t1, detailLevel);
-                } catch (ECException e) {
-                    throw new ECException("Error while building ECCategory Object", epResp, e);
+                } catch (ECTagParsingException e) {
+                    throw new ECPacketParsingException("Error parsing response to get categories", epResp.getRawPacket(), e);
                 }
             }
             return categoryList;
             
         default:
-            throw new ECException("Unexpected response to get categories", epResp);        
+            throw new ECPacketParsingException("Unexpected response to get categories", epResp.getRawPacket());        
             
         }
     }
     
     
-    public void createCategory(ECCategory c) throws ECException, IOException {
+    public void createCategory(ECCategory c) throws IOException, ECPacketParsingException, ECServerException, ECClientException {
         ECPacket epReq = new ECPacket();
         epReq.setOpCode(ECCodes.EC_OP_CREATE_CATEGORY);
         epReq.addTag(c.toECTag());
@@ -415,11 +451,11 @@ public class ECClient {
             // TODO Do something?
             return;
         default:
-            throw new ECException("Unexpected response to create category", epResp);        
+            throw new ECPacketParsingException("Unexpected response to create category", epResp.getRawPacket());        
         }
     }
     
-    public void updateCategory(ECCategory c) throws ECException, IOException {
+    public void updateCategory(ECCategory c) throws IOException, ECPacketParsingException, ECServerException, ECClientException {
         ECPacket epReq = new ECPacket();
         epReq.setOpCode(ECCodes.EC_OP_UPDATE_CATEGORY);
         epReq.addTag(c.toECTag());
@@ -430,17 +466,17 @@ public class ECClient {
             // TODO Do something?
             return;
         default:
-            throw new ECException("Unexpected response to update category", epResp);        
+            throw new ECPacketParsingException("Unexpected response to update category", epResp.getRawPacket());        
         }
     }
     
-    public void deleteCategory(long id) throws ECException, IOException {
+    public void deleteCategory(long id) throws IOException, ECPacketParsingException, ECServerException, ECClientException {
         ECPacket epReq = new ECPacket();
         epReq.setOpCode(ECCodes.EC_OP_DELETE_CATEGORY);
         try {
             epReq.addTag(new ECTag(ECCodes.EC_TAG_CATEGORY, ECTagTypes.EC_TAGTYPE_UINT32, id));
         } catch (DataFormatException e) {
-            throw new ECException("Severe Exception. This should never happen", epReq, e);
+            throw new ECClientException("Cannot craete delete category request", e);
         }
       
         ECPacket epResp = sendRequestAndWaitResponse(epReq);
@@ -449,7 +485,7 @@ public class ECClient {
             // TODO Do something?
             return;
         default:
-            throw new ECException("Unexpected response to delete category", epResp);        
+            throw new ECPacketParsingException("Unexpected response to delete category", epResp.getRawPacket());        
         }
     }
     

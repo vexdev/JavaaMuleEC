@@ -1,6 +1,11 @@
-package com.iukonline.amule.ec;
+package com.iukonline.amule.ec.exceptions;
+
+import com.iukonline.amule.ec.ECPacket;
+import com.iukonline.amule.ec.ECRawPacket;
 
 
+
+/*
 
 public class ECException extends Exception {
     
@@ -56,3 +61,4 @@ public class ECException extends Exception {
 
     
 }
+*/

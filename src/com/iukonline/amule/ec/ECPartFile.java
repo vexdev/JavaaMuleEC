@@ -6,6 +6,8 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.zip.DataFormatException;
 
+import com.iukonline.amule.ec.exceptions.ECTagParsingException;
+
 
 
 public class ECPartFile {
@@ -46,7 +48,7 @@ public class ECPartFile {
     private String ed2kLink;       
     private byte status;      
     private byte prio;        
-    private int cat;
+    private long cat;
     private int sourceCount;  
     private int metID;
 
@@ -68,7 +70,6 @@ public class ECPartFile {
     
     private int commentCount;
     private ArrayList<ECPartFileComment> comments;
-    
     private ArrayList<ECPartFileSourceName> sourceNames;
     
 
@@ -79,20 +80,20 @@ public class ECPartFile {
 
     }
     
-    public ECPartFile(ECTag t, byte d) throws ECException {
+    public ECPartFile(ECTag t, byte d) throws ECTagParsingException {
         fillFromTag(t, d);
     }
     
-    public void fillFromTag(ECTag pt, byte d) throws ECException {
+    public void fillFromTag(ECTag pt, byte d) throws ECTagParsingException {
         
         detailLevel = d;
         
-        if (pt.getTagName() != ECCodes.EC_TAG_PARTFILE) throw new ECException("Unexpected tag name " + pt.getTagName());
+        if (pt.getTagName() != ECCodes.EC_TAG_PARTFILE) throw new ECTagParsingException("Unexpected tag name " + pt.getTagName());
         
         try {
             hash = pt.getTagValueHash();
         } catch (DataFormatException e) {
-            throw new ECException("Unexpected tag type " + pt.getTagType());
+            throw new ECTagParsingException("Unexpected tag type " + pt.getTagType());
         }
         
         ECTag t;
@@ -106,75 +107,75 @@ public class ECPartFile {
                 
                 t = pt.getSubTagByName(ECCodes.EC_TAG_PARTFILE_STATUS);
                 if (t != null) status = (byte) t.getTagValueUInt();
-                else throw new ECException("Missing EC_TAG_PARTFILE_STATUS in server response");
+                else throw new ECTagParsingException("Missing EC_TAG_PARTFILE_STATUS in server response");
                 
                 t = pt.getSubTagByName(ECCodes.EC_TAG_PARTFILE_SOURCE_COUNT);
                 if (t != null) sourceCount = (int) t.getTagValueUInt();
-                else throw new ECException("Missing EC_TAG_PARTFILE_SOURCE_COUNT in server response");
+                else throw new ECTagParsingException("Missing EC_TAG_PARTFILE_SOURCE_COUNT in server response");
 
                 t = pt.getSubTagByName(ECCodes.EC_TAG_PARTFILE_SOURCE_COUNT_NOT_CURRENT);
                 if (t != null) sourceNotCurrent = (int) t.getTagValueUInt();
-                else throw new ECException("Missing EC_TAG_PARTFILE_SOURCE_COUNT_NOT_CURRENT in server response");
+                else throw new ECTagParsingException("Missing EC_TAG_PARTFILE_SOURCE_COUNT_NOT_CURRENT in server response");
                 
                 t = pt.getSubTagByName(ECCodes.EC_TAG_PARTFILE_SOURCE_COUNT_XFER);
                 if (t != null) sourceXfer = (int) t.getTagValueUInt();
-                else throw new ECException("Missing EC_TAG_PARTFILE_SOURCE_COUNT_XFER in server response");
+                else throw new ECTagParsingException("Missing EC_TAG_PARTFILE_SOURCE_COUNT_XFER in server response");
                 
                 t = pt.getSubTagByName(ECCodes.EC_TAG_PARTFILE_SOURCE_COUNT_A4AF);
                 if (t != null) sourceA4AF = (int) t.getTagValueUInt();
-                else throw new ECException("Missing EC_TAG_PARTFILE_SOURCE_COUNT_A4AF in server response");
+                else throw new ECTagParsingException("Missing EC_TAG_PARTFILE_SOURCE_COUNT_A4AF in server response");
                 
                 t = pt.getSubTagByName(ECCodes.EC_TAG_PARTFILE_SIZE_XFER);
                 if (t != null) sizeXfer = t.getTagValueUInt();
-                else throw new ECException("Missing EC_TAG_PARTFILE_SIZE_XFER in server response");
+                else throw new ECTagParsingException("Missing EC_TAG_PARTFILE_SIZE_XFER in server response");
                 
                 t = pt.getSubTagByName(ECCodes.EC_TAG_PARTFILE_SIZE_DONE);
                 if (t != null) sizeDone = t.getTagValueUInt();
-                else throw new ECException("Missing EC_TAG_PARTFILE_SIZE_DONE in server response");
+                else throw new ECTagParsingException("Missing EC_TAG_PARTFILE_SIZE_DONE in server response");
                 
                 t = pt.getSubTagByName(ECCodes.EC_TAG_PARTFILE_SIZE_FULL);
                 if (t != null) sizeFull = t.getTagValueUInt();
-                else throw new ECException("Missing EC_TAG_PARTFILE_SIZE_FULL in server response");
+                else throw new ECTagParsingException("Missing EC_TAG_PARTFILE_SIZE_FULL in server response");
                 
                 t = pt.getSubTagByName(ECCodes.EC_TAG_PARTFILE_SPEED);
                 if (t != null) speed = t.getTagValueUInt();
-                else throw new ECException("Missing EC_TAG_PARTFILE_SPEED in server response");
+                else throw new ECTagParsingException("Missing EC_TAG_PARTFILE_SPEED in server response");
                 
                 t = pt.getSubTagByName(ECCodes.EC_TAG_PARTFILE_PRIO);
                 if (t != null) prio = (byte) t.getTagValueUInt();
-                else throw new ECException("Missing EC_TAG_PARTFILE_PRIO in server response");
+                else throw new ECTagParsingException("Missing EC_TAG_PARTFILE_PRIO in server response");
                 
                 t = pt.getSubTagByName(ECCodes.EC_TAG_PARTFILE_CAT);
                 if (t != null) cat = (int) t.getTagValueUInt();
-                else throw new ECException("Missing EC_TAG_PARTFILE_CAT in server response");
+                else throw new ECTagParsingException("Missing EC_TAG_PARTFILE_CAT in server response");
                 
                 t = pt.getSubTagByName(ECCodes.EC_TAG_PARTFILE_LAST_SEEN_COMP);
                 if (t != null) lastSeenComp = new Date((int) t.getTagValueUInt());
-                else throw new ECException("Missing EC_TAG_PARTFILE_LAST_SEEN_COMP in server response");
+                else throw new ECTagParsingException("Missing EC_TAG_PARTFILE_LAST_SEEN_COMP in server response");
                 
                 t = pt.getSubTagByName(ECCodes.EC_TAG_PARTFILE_NAME);
                 if (t != null) fileName = t.getTagValueString();
-                else throw new ECException("Missing EC_TAG_PARTFILE_NAME in server response");           
+                else throw new ECTagParsingException("Missing EC_TAG_PARTFILE_NAME in server response");           
                 
                 t = pt.getSubTagByName(ECCodes.EC_TAG_PARTFILE_PARTMETID);
                 if (t != null) metID = (int) t.getTagValueUInt();
-                else throw new ECException("Missing EC_TAG_PARTFILE_PARTMETID in server response");     
+                else throw new ECTagParsingException("Missing EC_TAG_PARTFILE_PARTMETID in server response");     
                 
                 t = pt.getSubTagByName(ECCodes.EC_TAG_PARTFILE_ED2K_LINK);
                 if (t != null) ed2kLink = t.getTagValueString();
-                else throw new ECException("Missing EC_TAG_PARTFILE_ED2K_LINK in server response");     
+                else throw new ECTagParsingException("Missing EC_TAG_PARTFILE_ED2K_LINK in server response");     
 
                 t = pt.getSubTagByName(ECCodes.EC_TAG_PARTFILE_PART_STATUS);
                 if (t != null) partStatus = t.getTagValueCustom();
-                else throw new ECException("Missing EC_TAG_PARTFILE_PART_STATUS in server response"); 
+                else throw new ECTagParsingException("Missing EC_TAG_PARTFILE_PART_STATUS in server response"); 
 
                 t = pt.getSubTagByName(ECCodes.EC_TAG_PARTFILE_GAP_STATUS);
                 if (t != null) gapStatus = t.getTagValueCustom();
-                else throw new ECException("Missing EC_TAG_PARTFILE_GAP_STATUS in server response"); 
+                else throw new ECTagParsingException("Missing EC_TAG_PARTFILE_GAP_STATUS in server response"); 
                 
                 t = pt.getSubTagByName(ECCodes.EC_TAG_PARTFILE_REQ_STATUS);
                 if (t != null) reqStatus = t.getTagValueCustom();
-                else throw new ECException("Missing EC_TAG_PARTFILE_REQ_STATUS in server response"); 
+                else throw new ECTagParsingException("Missing EC_TAG_PARTFILE_REQ_STATUS in server response"); 
 
 
                 
@@ -238,17 +239,45 @@ public class ECPartFile {
                 break;
                 
             default:
-                throw new ECException("Unknown detail level " + detailLevel + " for EC_TAG_PARTFILE");
+                throw new ECTagParsingException("Unknown detail level " + detailLevel + " for EC_TAG_PARTFILE");
 
             }
             
         } catch (DataFormatException e) {
-            throw new ECException("One or more unexpected type in EC_PARTFILE tags", e);
+            throw new ECTagParsingException("One or more unexpected type in EC_PARTFILE tags", e);
         }
         
     }
 
-    
+    public void copyValuesFromPartFile(ECPartFile p) {
+        detailLevel = p.detailLevel;
+        hash = new byte[16]; System.arraycopy(p.getHash(), 0, hash, 0, 16);
+        fileName = p.fileName;
+        ed2kLink = p.ed2kLink;
+        status = p.status;
+        prio = p.prio;
+        cat = p.cat;
+        sourceCount = p.sourceCount;
+        metID = p.metID;
+        sourceA4AF = p.sourceA4AF;
+        sourceXfer = p.sourceXfer;
+        sourceNotCurrent = p.sourceNotCurrent;
+        sizeXfer = p.sizeXfer;
+        sizeFull = p.sizeFull;
+        sizeDone = p.sizeDone;
+        speed = p.speed;
+        lastSeenComp = p.lastSeenComp;
+        lastRecv = p.lastRecv;
+        partStatus = p.partStatus;
+        gapStatus = p.gapStatus;
+        reqStatus = p.reqStatus;
+        commentCount = p.commentCount;
+        
+        //TODO refresh values instead
+        comments = p.comments;
+        sourceNames = p.sourceNames;
+        
+    }
     
     
     
@@ -272,6 +301,10 @@ public class ECPartFile {
     public byte[] getHash() {
         return hash;
     }
+    
+    public String getHashAsString() {
+        return ECUtils.byteArrayToHexString(hash);
+    }
 
     public String getFileName() {
         return fileName;
@@ -289,7 +322,7 @@ public class ECPartFile {
         return prio;
     }
 
-    public int getCat() {
+    public long getCat() {
         return cat;
     }
 
@@ -390,7 +423,7 @@ public class ECPartFile {
     public String toString() {
         return String.format(
                         "ECPartFile [detailLevel=%s, hash=%s, fileName=%s, ed2kLink=%s, status=%s, prio=%s, cat=%s, sourceCount=%s, metID=%s, sourceA4AF=%s, sourceXfer=%s, sourceNotCurrent=%s, sizeXfer=%s, sizeFull=%s, sizeDone=%s, speed=%s, lastSeenComp=%s, lastRecv=%s, partStatus=%s, gapStatus=%s, reqStatus=%s, commentCount=%s, comments=%s, sourceNames=%s]",
-                        detailLevel,  hash, fileName, ed2kLink, status, prio, cat, sourceCount, metID, sourceA4AF, sourceXfer, sourceNotCurrent,
+                        detailLevel,  getHashAsString(), fileName, ed2kLink, status, prio, cat, sourceCount, metID, sourceA4AF, sourceXfer, sourceNotCurrent,
                         sizeXfer, sizeFull, sizeDone, speed, lastSeenComp, lastRecv, partStatus, gapStatus, reqStatus, commentCount, comments, sourceNames);
     }
 
@@ -406,27 +439,27 @@ public class ECPartFile {
         private byte rating;
         private String comment;
         
-        public ECPartFileComment(Iterator <ECTag> i) throws ECException  {
+        public ECPartFileComment(Iterator <ECTag> i) throws ECTagParsingException   {
             ECTag t;
             try {
                 if (i.hasNext()) {
                     t = i.next();
-                    if (t.getTagName() != ECCodes.EC_TAG_PARTFILE_COMMENTS) throw new ECException("Unexpected tag " + t.getTagName() + " while looking for EC_TAG_PARTFILE_COMMENTS");
+                    if (t.getTagName() != ECCodes.EC_TAG_PARTFILE_COMMENTS) throw new ECTagParsingException("Unexpected tag " + t.getTagName() + " while looking for EC_TAG_PARTFILE_COMMENTS");
                     author = new String(t.getTagValueString());
     
                     if (i.hasNext()) {
                         t = i.next();
-                        if (t.getTagName() != ECCodes.EC_TAG_PARTFILE_COMMENTS) throw new ECException("Unexpected tag " + t.getTagName() + " while looking for EC_TAG_PARTFILE_COMMENTS");
+                        if (t.getTagName() != ECCodes.EC_TAG_PARTFILE_COMMENTS) throw new ECTagParsingException("Unexpected tag " + t.getTagName() + " while looking for EC_TAG_PARTFILE_COMMENTS");
                         sourceName = new String(t.getTagValueString());
                         
                         if (i.hasNext()) {
                             t = i.next();
-                            if (t.getTagName() != ECCodes.EC_TAG_PARTFILE_COMMENTS) throw new ECException("Unexpected tag " + t.getTagName() + " while looking for EC_TAG_PARTFILE_COMMENTS");
+                            if (t.getTagName() != ECCodes.EC_TAG_PARTFILE_COMMENTS) throw new ECTagParsingException("Unexpected tag " + t.getTagName() + " while looking for EC_TAG_PARTFILE_COMMENTS");
                             rating = (byte) t.getTagValueUInt();
                             
                             if (i.hasNext()) {
                                 t = i.next();
-                                if (t.getTagName() != ECCodes.EC_TAG_PARTFILE_COMMENTS) throw new ECException("Unexpected tag " + t.getTagName() + " while looking for EC_TAG_PARTFILE_COMMENTS");
+                                if (t.getTagName() != ECCodes.EC_TAG_PARTFILE_COMMENTS) throw new ECTagParsingException("Unexpected tag " + t.getTagName() + " while looking for EC_TAG_PARTFILE_COMMENTS");
                                 comment = new String(t.getTagValueString());
                                 return;
                             }
@@ -434,9 +467,9 @@ public class ECPartFile {
                     }
                 }
             } catch (DataFormatException e) {
-                throw new ECException("One or more unexpected type in EC_TAG_PARTFILE_COMMENTS tag", e);
+                throw new ECTagParsingException("One or more unexpected type in EC_TAG_PARTFILE_COMMENTS tag", e);
             }
-            throw new ECException("Unexpected end of EC_TAG_PARTFILE_COMMENTS tags");
+            throw new ECTagParsingException("Unexpected end of EC_TAG_PARTFILE_COMMENTS tags");
         }
 
         public String getAuthor() {
@@ -468,25 +501,25 @@ public class ECPartFile {
         private String name;
         private int count;
         
-        public ECPartFileSourceName(Iterator <ECTag> i) throws ECException {
+        public ECPartFileSourceName(Iterator <ECTag> i) throws ECTagParsingException  {
             ECTag t;
             try {
                 if (i.hasNext()) {
                     t = i.next();
-                    if (t.getTagName() != ECCodes.EC_TAG_PARTFILE_SOURCE_NAMES) throw new ECException("Unexpected tag " + t.getTagName() + " while looking for EC_TAG_PARTFILE_SOURCE_NAMES");
+                    if (t.getTagName() != ECCodes.EC_TAG_PARTFILE_SOURCE_NAMES) throw new ECTagParsingException("Unexpected tag " + t.getTagName() + " while looking for EC_TAG_PARTFILE_SOURCE_NAMES");
                     name = new String(t.getTagValueString());
     
                     if (i.hasNext()) {
                         t = i.next();
-                        if (t.getTagName() != ECCodes.EC_TAG_PARTFILE_SOURCE_NAMES) throw new ECException("Unexpected tag " + t.getTagName() + " while looking for EC_TAG_PARTFILE_SOURCE_NAMES");
+                        if (t.getTagName() != ECCodes.EC_TAG_PARTFILE_SOURCE_NAMES) throw new ECTagParsingException("Unexpected tag " + t.getTagName() + " while looking for EC_TAG_PARTFILE_SOURCE_NAMES");
                         count = (int) t.getTagValueUInt();
                         return;
                     }
                 }
             } catch (DataFormatException e) {
-                throw new ECException("One or more unexpected type in EC_TAG_PARTFILE_SOURCE_NAMES tag", e);
+                throw new ECTagParsingException("One or more unexpected type in EC_TAG_PARTFILE_SOURCE_NAMES tag", e);
             }
-            throw new ECException("Unexpected end of EC_TAG_PARTFILE_SOURCE_NAMES tags");
+            throw new ECTagParsingException("Unexpected end of EC_TAG_PARTFILE_SOURCE_NAMES tags");
         }
 
         public String getName() {

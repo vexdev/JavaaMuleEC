@@ -28,8 +28,6 @@ package com.iukonline.amule.ec;
 
 public interface ECCodes {
 
-
-
 public final static short EC_CURRENT_PROTOCOL_VERSION = 0x0200;
 
 public final static int EC_FLAG_ZLIB     = 0x00000001;

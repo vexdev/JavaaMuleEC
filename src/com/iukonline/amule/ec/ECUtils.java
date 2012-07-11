@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.CharacterCodingException;
 
+import com.iukonline.amule.ec.exceptions.ECDebugException;
+
 public class ECUtils {
     
     static byte[] uintToBytes(long uint, int numBytes, boolean MSB) {
@@ -287,14 +289,14 @@ public class ECUtils {
         }
     }
 
-    public static String hexDecode(byte[] value, int offset, int numBytes, String description, int hexPerRow, int indentSpaces) throws ECException {
+    public static String hexDecode(byte[] value, int offset, int numBytes, String description, int hexPerRow, int indentSpaces) throws ECDebugException {
 
         //System.out.printf("offset: %d, numButes: %d, description: %s, hexPerRow: %d, indentSpaces: %d\n", offset, numBytes, description, hexPerRow, indentSpaces);
         
-        if (value == null) throw new ECException("Trying to hexDump null payload");
-        if (numBytes < 0) throw new ECException("Trying to hexDump negative length (" + numBytes + ")");
-        if (offset >= value.length) throw new ECException("hexDump start (" + offset + ") is greater than payload length (" + value.length + ")");
-        if (offset + numBytes > value.length) throw new ECException("hexDump end (" + (offset + numBytes) + ") is outside payloadlength (" + value.length + ")");
+        if (value == null) throw new ECDebugException("Trying to hexDump null payload");
+        if (numBytes < 0) throw new ECDebugException("Trying to hexDump negative length (" + numBytes + ")");
+        if (offset >= value.length) throw new ECDebugException("hexDump start (" + offset + ") is greater than payload length (" + value.length + ")");
+        if (offset + numBytes > value.length) throw new ECDebugException("hexDump end (" + (offset + numBytes) + ") is outside payloadlength (" + value.length + ")");
         
         StringBuilder s = new StringBuilder();
         

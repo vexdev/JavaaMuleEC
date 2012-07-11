@@ -1,7 +1,9 @@
-package com.iukonline.amule.ec;
+/*package com.iukonline.amule.ec;
 
 import java.io.IOException;
 import java.util.zip.DataFormatException;
+
+import com.iukonline.amule.ec.exceptions.ECException;
 
 public class ECFakeTestClient extends ECClient {
     ECFakeTestServer server = new ECFakeTestServer();
@@ -41,3 +43,4 @@ public class ECFakeTestClient extends ECClient {
     }
 
 }
+*/

@@ -7,6 +7,8 @@ import java.util.ArrayList;
 import java.util.Formatter;
 import java.util.Iterator;
 
+import com.iukonline.amule.ec.exceptions.ECPacketParsingException;
+
 
 
 public class ECPacket {
@@ -23,7 +25,6 @@ public class ECPacket {
     private boolean hasId = false;
     private boolean acceptsUTF8 = true;
     private boolean acceptsZlib = true;
-    
     
     private ECRawPacket encodedPacket;
     
@@ -49,6 +50,8 @@ public class ECPacket {
     public byte getOpCode() { return opCode; }
     public void setOpCode(byte opCode) { this.opCode = opCode; }
     
+    ECRawPacket getRawPacket() { return encodedPacket; }
+    
     public void addTag(ECTag tag) { tags.add(tag); }
     
     public ArrayList<ECTag> getTags() { return tags; }
@@ -68,30 +71,17 @@ public class ECPacket {
     }
     
 
-    public void writeToStream(OutputStream out) throws IOException, ECException  {
-        try {
-            encodedPacket = new ECRawPacket(this);
-        } catch (ECException e) {
-            throw new ECException("Error builbing raw packet", this, e);
-        }
+    public void writeToStream(OutputStream out) throws IOException, ECPacketParsingException  {
+        encodedPacket = new ECRawPacket(this);
         out.write(encodedPacket.asByteArray());
     }
     
-    public static ECPacket readFromStream(InputStream in) throws IOException, ECException {
-        ECRawPacket raw;
-        try {
-            raw = new ECRawPacket(in);
-        } catch (ECException e) {
-            throw new ECException("Error reading raw packet", e);
-        }
+    public static ECPacket readFromStream(InputStream in) throws IOException, ECPacketParsingException {
+        ECRawPacket raw = new ECRawPacket(in);
         ECPacket n;
-        try {
-            n = raw.parse();
-            n.encodedPacket = raw;
-            return n;
-        } catch (ECException e) {
-            throw new ECException("Error parsing raw packet", raw, e);        
-        }
+        n = raw.parse();
+        n.encodedPacket = raw;
+        return n;
 
     }
     

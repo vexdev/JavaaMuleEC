@@ -3,6 +3,8 @@ package com.iukonline.amule.ec;
 import java.net.InetSocketAddress;
 import java.util.zip.DataFormatException;
 
+import com.iukonline.amule.ec.exceptions.ECTagParsingException;
+
 public class ECServer {
     
     
@@ -20,7 +22,7 @@ public class ECServer {
     InetSocketAddress serverAddr;
     
     
-    public ECServer(ECTag t1, byte d) throws ECException {
+    public ECServer(ECTag t1, byte d) throws ECTagParsingException {
         
         detailLevel = d;
         ECTag t;
@@ -32,39 +34,39 @@ public class ECServer {
                 
                 t = t1.getSubTagByName(ECCodes.EC_TAG_SERVER_PING);
                 if (t != null) serverPing = t.getTagValueUInt();
-                else throw new ECException("Missing EC_TAG_SERVER_PING in server response");
+                else throw new ECTagParsingException("Missing EC_TAG_SERVER_PING in server response");
                 
                 
                 t = t1.getSubTagByName(ECCodes.EC_TAG_SERVER_PRIO);
                 if (t != null) serverPrio = (byte) t.getTagValueUInt();
-                else throw new ECException("Missing EC_TAG_SERVER_PRIO in server response");
+                else throw new ECTagParsingException("Missing EC_TAG_SERVER_PRIO in server response");
                 
                 t = t1.getSubTagByName(ECCodes.EC_TAG_SERVER_VERSION);
                 if (t != null) serverVersion = t.getTagValueString();
-                else throw new ECException("Missing EC_TAG_SERVER_VERSION in server response");
+                else throw new ECTagParsingException("Missing EC_TAG_SERVER_VERSION in server response");
                 
                 t = t1.getSubTagByName(ECCodes.EC_TAG_SERVER_DESC);
                 if (t != null) serverDesc = t.getTagValueString();
-                else throw new ECException("Missing EC_TAG_SERVER_DESC in server response");
+                else throw new ECTagParsingException("Missing EC_TAG_SERVER_DESC in server response");
                 
                 t = t1.getSubTagByName(ECCodes.EC_TAG_SERVER_USERS);
                 if (t != null) serverUsers = t.getTagValueUInt();
-                else throw new ECException("Missing EC_TAG_SERVER_USERS in server response");
+                else throw new ECTagParsingException("Missing EC_TAG_SERVER_USERS in server response");
 
                 t = t1.getSubTagByName(ECCodes.EC_TAG_SERVER_USERS_MAX);
                 if (t != null) serverUsersMax = t.getTagValueUInt();
-                else throw new ECException("Missing EC_TAG_SERVER_USERS_MAX in server response");
+                else throw new ECTagParsingException("Missing EC_TAG_SERVER_USERS_MAX in server response");
                 
                 t = t1.getSubTagByName(ECCodes.EC_TAG_SERVER_FILES);
                 if (t != null) serverFiles = t.getTagValueUInt();
-                else throw new ECException("Missing EC_TAG_SERVER_FILES in server response");
+                else throw new ECTagParsingException("Missing EC_TAG_SERVER_FILES in server response");
                 
             case ECCodes.EC_DETAIL_WEB:
             case ECCodes.EC_DETAIL_CMD:
                 
                 t = t1.getSubTagByName(ECCodes.EC_TAG_SERVER_NAME);
                 if (t != null) serverName = t.getTagValueString();
-                else throw new ECException("Missing EC_TAG_SERVER_NAME in server response");
+                else throw new ECTagParsingException("Missing EC_TAG_SERVER_NAME in server response");
 
                 
                 serverAddr = t1.getTagValueIPv4();
@@ -72,12 +74,12 @@ public class ECServer {
                 break;
                 
             default:
-                throw new ECException("Unknown detail level " + detailLevel + " for EC_TAG_SERVER");
+                throw new ECTagParsingException("Unknown detail level " + detailLevel + " for EC_TAG_SERVER");
 
             }
             
         } catch (DataFormatException e) {
-            throw new ECException("One or more unexpected type in EC_TAG_SERVER tags", e);
+            throw new ECTagParsingException("One or more unexpected type in EC_TAG_SERVER tags", e);
         }
         
     }

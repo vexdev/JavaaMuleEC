@@ -11,6 +11,10 @@ import java.util.ArrayList;
 import java.util.zip.DataFormatException;
 import java.util.zip.Inflater;
 
+import com.iukonline.amule.ec.exceptions.ECPacketParsingException;
+import com.iukonline.amule.ec.exceptions.ECTagParsingException;
+import com.iukonline.amule.ec.exceptions.ECDebugException;
+
 public class ECRawPacket {
     
     final static int hexPerRow = 16;
@@ -37,14 +41,14 @@ public class ECRawPacket {
     boolean debug = false;
 
 
-    public ECRawPacket (InputStream is) throws IOException, ECException {
+    public ECRawPacket (InputStream is) throws IOException, ECPacketParsingException {
         
         rawFlags = new byte[4];
         ECUtils.readAllBytes(is, rawFlags, 0, 4, debug);
         if (debug) System.out.println("ECRawPacket: Got transmission flags: " + ECUtils.byteArrayToHexString(rawFlags));
         flags = ECUtils.bytesToUint(rawFlags, 4, true);
         
-        if ((flags & ECCodes.EC_FLAG_UNKNOWN_MASK) != 0 ) throw new ECException("Unknown trasmission flags");
+        if ((flags & ECCodes.EC_FLAG_UNKNOWN_MASK) != 0 ) throw new ECPacketParsingException("Unknown trasmission flags", this);
 
         rawAccepts = new byte[4];
         if (hasAccepts()) {
@@ -59,7 +63,7 @@ public class ECRawPacket {
         // TODO: Handle packet with len > 2,147,483,647 (max int)? Doesn't seem to be useful...
         len = (int) ECUtils.bytesToUint(rawLen, 4, true);
         
-        if (len == 0) throw new ECException("Invalid EC Packet payload length (0)", this);
+        if (len == 0) throw new ECPacketParsingException("Invalid EC Packet payload length (0)", this);
         
         if (isZlibCompressed()) {
             
@@ -78,7 +82,7 @@ public class ECRawPacket {
             try {
                 read = unzipper.inflate(buf);
             } catch (DataFormatException e) {
-                throw new ECException("Error inflating zlib compressed payload", this, e);
+                throw new ECPacketParsingException("Error inflating zlib compressed payload", this, e);
             }
             int totRead = 0;
             
@@ -99,7 +103,7 @@ public class ECRawPacket {
                 try {
                     read = unzipper.inflate(buf);
                 } catch (DataFormatException e) {
-                    throw new ECException("Error inflating zlib compressed payload", this, e);
+                    throw new ECPacketParsingException("Error inflating zlib compressed payload", this, e);
                 }
             }
             len = rawPayload.length;
@@ -113,7 +117,7 @@ public class ECRawPacket {
         
     }
     
-    public ECRawPacket (ECPacket p) throws ECException  {
+    public ECRawPacket (ECPacket p) throws ECPacketParsingException  {
         
         // TODO: UTF-8 Compression
 
@@ -135,7 +139,7 @@ public class ECRawPacket {
             // TODO Brutto, trovare altra soluzione che non richieda implementazione in ECTag
             try {
                 tagsLen += tags.get(i).getLength(true, false);
-            } catch (ECException e) {
+            } catch (ECTagParsingException e) {
                 // TODO All getLength exceptions are related to UTF-8, so no need to catch them until UTF-8 Compression is implemented 
 
             }
@@ -175,11 +179,11 @@ public class ECRawPacket {
     
     
     
-    public ECPacket parse() throws ECException {
+    public ECPacket parse() throws ECPacketParsingException {
         try {
             tagsIndex = tagsCountIndex + (isUTF8Compressed() ? ECUtils.getUTF8SequenceLength(rawPayload[tagsCountIndex], debug) : 2);
         } catch (CharacterCodingException e) {
-            throw new ECException("Error parsing tags count - Invalid encoding.", this, e);
+            throw new ECPacketParsingException("Error parsing tags count - Invalid UTF8 sequence.", this, e);
         }
         if (debug) System.out.println("ECRawPacket.parse: tagsIndex = " + tagsIndex);
         int tagsCount = getTagsCount();
@@ -207,11 +211,11 @@ public class ECRawPacket {
         }
         
         if (index != rawPayload.length) {
-            throw new ECException("Error parsing tags list - Expected len " + rawPayload.length + " found length " + index, this);
+            throw new ECPacketParsingException("Error parsing tags list - Expected len " + rawPayload.length + " found length " + index, this);
         }
         
         if (tagCounter != tagsCount) {
-            throw new ECException("Error parsing tags list - Expected tags " + tagsCount + " found tags " + tagCounter, this);
+            throw new ECPacketParsingException("Error parsing tags list - Expected tags " + tagsCount + " found tags " + tagCounter, this);
         }
         
         return ep;
@@ -292,14 +296,14 @@ public class ECRawPacket {
         return rawPayload[0];
     }
     
-    public int getTagsCount() throws ECException {
+    public int getTagsCount() throws ECPacketParsingException {
         if (! isUTF8Compressed()) {
             return (int) ECUtils.bytesToUint(rawPayload, tagsCountIndex, tagsIndex - tagsCountIndex, true, debug);
         } else {
             try {
                 return (int) ECUtils.decodeUTF8number(rawPayload, tagsCountIndex, debug);
             } catch (CharacterCodingException e) {
-                throw new ECException("Error parsing tags count - invalid encoding.", e);
+                throw new ECPacketParsingException("Error parsing tags count - invalid encoding.", this, e);
             }
         }
     }  
@@ -426,9 +430,9 @@ public class ECRawPacket {
             nextIndex = tagsIndex;
             
             for (int i = 0; i < tagsCount; i++) {
-                if (rawTagsList == null) throw new ECException("Tag list not decoded while it was expeted to be");
-                if (i >= rawTagsList.length) throw new ECException("Expecting " + tagsCount + " tags, found only " + rawTagsList.length);
-                if (rawTagsList[i] == null) throw new ECException("Tag " + i + " not present where expected");
+                if (rawTagsList == null) throw new ECPacketParsingException("Tag list not decoded while it was expeted to be", this);
+                if (i >= rawTagsList.length) throw new ECPacketParsingException("Expecting " + tagsCount + " tags, found only " + rawTagsList.length, this);
+                if (rawTagsList[i] == null) throw new ECPacketParsingException("Tag " + i + " not present where expected", this);
                 s.append(rawTagsList[i].dump(0));
                 nextIndex = rawTagsList[i].tagEnd + 1;
             }
@@ -437,7 +441,7 @@ public class ECRawPacket {
                 s.append(ECUtils.hexDecode(rawPayload, nextIndex, rawPayload.length - nextIndex, "Unexpected remaining payload", hexPerRow, 0));
             }
             
-        } catch (ECException e) {
+        } catch (Exception e) {
             try {
                 if (! flagsDumped) {
                     s.append(ECUtils.hexDecode(rawFlags, 0, 4, "ERROR -- Can't decode flags: " + e.getMessage(), hexPerRow, 0));
@@ -454,7 +458,7 @@ public class ECRawPacket {
                 } else {
                     s.append(ECUtils.hexDecode(rawPayload, nextIndex, rawPayload.length - nextIndex, "ERROR -- Can't decode payload: " + e.getMessage(), hexPerRow, 0));
                 }
-            } catch (ECException e1) {
+            } catch (ECDebugException e1) {
                 if (! flagsDumped) {
                     s.append("Can't decode flags " + e.getMessage());
                 } else if (! acceptsDumped && hasAccepts()) {
@@ -493,7 +497,7 @@ public class ECRawPacket {
             tagStart = index;
         }
         
-        public ECRawTag(ECTag t, int startIndex) throws ECException {
+        public ECRawTag(ECTag t, int startIndex) throws ECPacketParsingException {
             
             // TODO UTF-8 Compression - Complesso perchè per i subtag la lunghezza è calcolata come se non fossero compressi...
             
@@ -587,11 +591,11 @@ public class ECRawPacket {
                     value = t.getTagValueHash();
                     break;
                 default:
-                    throw new ECException("Unknownt tag type - " + t.getTagType());
+                    throw new ECPacketParsingException("Unknownt tag type - " + t.getTagType(), ECRawPacket.this);
                 }
             } catch (DataFormatException e) {
                 // This should never happen. Type and value are checked by ECTag class
-                throw new ECException("Tag type and value are not matching", e);
+                throw new ECPacketParsingException("Tag type and value are not matching", ECRawPacket.this, e);
                 
             }
     
@@ -609,19 +613,19 @@ public class ECRawPacket {
             
         }
         
-        public ECTag parse() throws ECException {
+        public ECTag parse() throws ECPacketParsingException {
             
             tagNameIndex = tagStart;
             try {
                 tagTypeIndex = tagNameIndex + (isUTF8Compressed() ? ECUtils.getUTF8SequenceLength(rawPayload[tagNameIndex], debug) : 2);
             } catch (CharacterCodingException e) {
-                throw new ECException("Error parsing tagName, invalid UTF-8 value", e);
+                throw new ECPacketParsingException("Error parsing tagName, invalid UTF-8 sequence", ECRawPacket.this, e);
             }
             tagLenIndex = tagTypeIndex + 1;
             try {
                 subTagsCountIndex = tagLenIndex + (isUTF8Compressed() ? ECUtils.getUTF8SequenceLength(rawPayload[tagLenIndex], debug) : 4);
             } catch (CharacterCodingException e) {
-                throw new ECException("Error parsing tagLength, invalid UTF-8 value", e);
+                throw new ECPacketParsingException("Error parsing tagLength, invalid UTF-8 sequence", ECRawPacket.this, e);
             }
 
             
@@ -652,7 +656,7 @@ public class ECRawPacket {
                 try {
                     subTagsIndex = subTagsCountIndex + (isUTF8Compressed() ?  ECUtils.getUTF8SequenceLength(rawPayload[subTagsCountIndex], debug) : 2);
                 } catch (CharacterCodingException e) {
-                    throw new ECException("Error parsing subTagsCount, invalid UTF-8 value", e);
+                    throw new ECPacketParsingException("Error parsing subTagsCount, invalid UTF-8 value", ECRawPacket.this, e);
                 }
                 subTagsCount = getSubTagsCount();
                 
@@ -677,9 +681,9 @@ public class ECRawPacket {
                 }
                 
                 if (remainingLen < 0) {
-                    throw new ECException("Error parsing subTags list. Last parsed tag ended " + (-remainingLen) + "bytes ot of expected bounds");
+                    throw new ECPacketParsingException("Error parsing subTags list. Last parsed tag ended " + (-remainingLen) + "bytes ot of expected bounds", ECRawPacket.this);
                 } else if (tagCounter != subTagsCount) {
-                    throw new ECException("Error parsing subTags list. Expecting " + subTagsCount + " tags, found " + tagCounter);
+                    throw new ECPacketParsingException("Error parsing subTags list. Expecting " + subTagsCount + " tags, found " + tagCounter, ECRawPacket.this);
                 }
                 
                 tagValueIndex = index;
@@ -701,7 +705,7 @@ public class ECRawPacket {
             try {
                 et.setTagType(getTagType());
             } catch (DataFormatException e) {
-                throw new ECException("Invalid tag type found while parsing", e);
+                throw new ECPacketParsingException("Invalid tag type found while parsing", ECRawPacket.this, e);
             }
             
             try {
@@ -713,33 +717,33 @@ public class ECRawPacket {
                     if (value.length == 0) {
                         et.setTagValueUInt(0);                    
                     } else if (value.length  != 1) {
-                        throw new ECException("Wrong length for UINT8 tag (" + value.length + ")");
+                        throw new ECPacketParsingException("Wrong length for UINT8 tag (" + value.length + ")", ECRawPacket.this);
                     } else {
                         et.setTagValueUInt(ECUtils.bytesToUint(value, 1, true));
                     }
                     break;
                 case ECTagTypes.EC_TAGTYPE_UINT16:
-                    if (value.length != 2) throw new ECException("Wrong length for UINT8 tag (" + value.length + ")");
+                    if (value.length != 2) throw new ECPacketParsingException("Wrong length for UINT8 tag (" + value.length + ")", ECRawPacket.this);
                     et.setTagValueUInt(ECUtils.bytesToUint(value, 2, true));            
                     break;
                 case ECTagTypes.EC_TAGTYPE_UINT32:
-                    if (value.length != 4) throw new ECException("ECTag: Wrong length for UINT8 tag (" + value.length + ")");
+                    if (value.length != 4) throw new ECPacketParsingException("ECTag: Wrong length for UINT8 tag (" + value.length + ")", ECRawPacket.this);
                     et.setTagValueUInt(ECUtils.bytesToUint(value, 4, true));            
                     break;
                 case ECTagTypes.EC_TAGTYPE_UINT64:
-                    if (value.length != 8) throw new ECException("Wrong length for UINT8 tag (" + value.length + ")");
+                    if (value.length != 8) throw new ECPacketParsingException("Wrong length for UINT8 tag (" + value.length + ")", ECRawPacket.this);
                     et.setTagValueUInt(ECUtils.bytesToUint(value, 8, true));            
                     break;
                 case ECTagTypes.EC_TAGTYPE_STRING:
-                    if (value[value.length - 1] != 0x0) throw new ECException("String tag value is not terminated with 0x0");
+                    if (value[value.length - 1] != 0x0) throw new ECPacketParsingException("String tag value is not terminated with 0x0", ECRawPacket.this);
                     et.setTagValueString(new String(value, 0, value.length - 1, "UTF-8"));
                     break;
                 case ECTagTypes.EC_TAGTYPE_DOUBLE:
-                    if (value[value.length - 1] != 0x00) throw new ECException("Double string value is not terminated with 00... Wrong length?");
+                    if (value[value.length - 1] != 0x00) throw new ECPacketParsingException("Double string value is not terminated with 00... Wrong length?", ECRawPacket.this);
                     et.setTagValueDouble(Double.parseDouble(new String(value, 0, value.length - 1, "UTF-8")));
                     break;
                 case ECTagTypes.EC_TAGTYPE_IPV4:
-                    if (value.length != 6) throw new ECException("Wrong length for IPV4 tag value (" + value.length + ")");
+                    if (value.length != 6) throw new ECPacketParsingException("Wrong length for IPV4 tag value (" + value.length + ")", ECRawPacket.this);
     
                     byte [] ipAddr = new byte[4];
                     System.arraycopy(value, 0, ipAddr, 0, 4);
@@ -747,23 +751,23 @@ public class ECRawPacket {
                     et.setTagValueIPv4(new InetSocketAddress(InetAddress.getByAddress(ipAddr), port));
                     break;
                 case ECTagTypes.EC_TAGTYPE_HASH16:
-                    if (value.length != 16) throw new ECException("Wrong length for HASH16 tag (" + value.length + ")");
+                    if (value.length != 16) throw new ECPacketParsingException("Wrong length for HASH16 tag (" + value.length + ")", ECRawPacket.this);
                     et.setTagValueHash(value);
                     break;
                 default:
                     // This should never happen as tag type is checked by previous try
-                    throw new ECException("Tag type " + getTagType() + " not implemented");
+                    throw new ECPacketParsingException("Tag type " + getTagType() + " not implemented", ECRawPacket.this);
                 }
             } catch (DataFormatException e) {
                 // This should never happen either
-                throw new ECException("Severe error: mismatch between tag type and value not expected");
+                throw new ECPacketParsingException("Severe error: mismatch between tag type and value not expected", ECRawPacket.this);
             } catch (UnsupportedEncodingException e) {
                 
-                throw new ECException("Severe error: UTF-8 encoding not supported for strings", e);
+                throw new ECPacketParsingException("Severe error: UTF-8 encoding not supported for strings", ECRawPacket.this, e);
             } catch (UnknownHostException e) {
                 // TODO: TBV if InetAddress + InetSocketAddress is the best class to be used, as they can throw 
                 // this exception
-                throw new ECException("Unknown host in IPV4 tag value", e);
+                throw new ECPacketParsingException("Unknown host in IPV4 tag value", ECRawPacket.this, e);
             }
 
             return et;
@@ -773,7 +777,7 @@ public class ECRawPacket {
         
         
         
-        public int getUncompressedTagLength() throws ECException {
+        public int getUncompressedTagLength() throws ECPacketParsingException {
             int l = 7;       // Tagname (2) + tagtype (1) + taglen (4) 
             if (hasSubTags()) { 
                 l += 2;          // Subtags count (2)
@@ -785,11 +789,11 @@ public class ECRawPacket {
             return l;
         }
         
-        public boolean hasSubTags() throws ECException {
+        public boolean hasSubTags() throws ECPacketParsingException {
             return !((getUnshiftedTagName() & 0x1) == 0);
         }
         
-        public void setHasSubTags(boolean has) throws ECException {
+        public void setHasSubTags(boolean has) throws ECPacketParsingException {
             int tagName = getUnshiftedTagName();
             if (has) {
                 tagName |= 0x1;
@@ -801,14 +805,14 @@ public class ECRawPacket {
             setUnshiftedTagName(tagName);
         }
         
-        public int getSubTagsCount() throws ECException {
+        public int getSubTagsCount() throws ECPacketParsingException {
             if (! isUTF8Compressed()) {
                 return (int) ECUtils.bytesToUint(rawPayload, subTagsCountIndex, subTagsIndex - subTagsCountIndex, true, debug);
             } else {
                 try {
                     return (int) ECUtils.decodeUTF8number(rawPayload, subTagsCountIndex, debug);
                 } catch (CharacterCodingException e) {
-                    throw new ECException("Error parsing tagLen - invalid UTF8 sequence.", e);
+                    throw new ECPacketParsingException("Error parsing tagLen - invalid UTF8 sequence.", ECRawPacket.this, e);
                 }
             }
         }
@@ -825,14 +829,14 @@ public class ECRawPacket {
             return tagEnd;
         }
         
-        public int getTagLen() throws ECException {
+        public int getTagLen() throws ECPacketParsingException {
             if (! isUTF8Compressed()) {
                 return (int) ECUtils.bytesToUint(rawPayload, tagLenIndex, subTagsCountIndex - tagLenIndex, true, debug);
             } else {
                 try {
                     return (int) ECUtils.decodeUTF8number(rawPayload, tagLenIndex, debug);
                 } catch (CharacterCodingException e) {
-                    throw new ECException("Error parsing tagLen - invalid UTF8 sequence.", e);
+                    throw new ECPacketParsingException("Error parsing tagLen - invalid UTF8 sequence.", ECRawPacket.this, e);
                 }
             }
         }
@@ -844,14 +848,14 @@ public class ECRawPacket {
             System.arraycopy(ECUtils.uintToBytes(value, l, true), 0, rawPayload, tagLenIndex, l);
         }
         
-        private int getUnshiftedTagName() throws ECException {
+        private int getUnshiftedTagName() throws ECPacketParsingException {
             if (! isUTF8Compressed()) {
                 return (int) ECUtils.bytesToUint(rawPayload, tagNameIndex, tagTypeIndex - tagNameIndex, true, debug);
             } else {
                 try {
                     return (int) ECUtils.decodeUTF8number(rawPayload, tagNameIndex, debug);
                 } catch (CharacterCodingException e) {
-                    throw new ECException("Error parsing tagName - invalid UTF-8 sequence.", e);                
+                    throw new ECPacketParsingException("Error parsing tagName - invalid UTF-8 sequence.", ECRawPacket.this, e);                
                 }
             }
         }
@@ -862,11 +866,11 @@ public class ECRawPacket {
             System.arraycopy(ECUtils.uintToBytes(tagName, tagNameLen, true), 0, rawPayload, tagNameIndex, tagNameLen);
         }
         
-        public short getTagName() throws ECException {
+        public short getTagName() throws ECPacketParsingException {
             return  (short) (getUnshiftedTagName() >> 1);
         }
         
-        public void setTagName(int i) throws ECException {
+        public void setTagName(int i) throws ECPacketParsingException {
             
             int tagName = i;
             tagName <<= 1;
@@ -1090,7 +1094,7 @@ public class ECRawPacket {
                 default:
                     return "UNKNOWN";
                 }
-            } catch (ECException e) {
+            } catch (ECPacketParsingException e) {
                 return "INVALID";
             }
         }
@@ -1156,9 +1160,9 @@ public class ECRawPacket {
                     
                     for (int i = 0; i < subTagsCount; i++) {
                         
-                        if (rawSubTagsList == null) throw new ECException("subTagsList not decoded while it was expeted to be");
-                        if (i >= rawSubTagsList.length) throw new ECException("Expecting " + subTagsCount + " subTags, found only " + rawSubTagsList.length);
-                        if (rawSubTagsList[i] == null) throw new ECException("subTag " + i + " not present where expected");
+                        if (rawSubTagsList == null) throw new ECPacketParsingException("subTagsList not decoded while it was expected to be");
+                        if (i >= rawSubTagsList.length) throw new ECPacketParsingException("Expecting " + subTagsCount + " subTags, found only " + rawSubTagsList.length);
+                        if (rawSubTagsList[i] == null) throw new ECPacketParsingException("subTag " + i + " not present where expected");
 
                         
                         
@@ -1212,12 +1216,12 @@ public class ECRawPacket {
                     nextIndex = tagValueIndex;
                     s.append(ECUtils.hexDecode(rawPayload, tagValueIndex, tagValueLen, "tagValue="+tagValue , hexPerRow, indent));
                 }
-            } catch (ECException e) {
+            } catch (Exception e) {
                 int dumpEnd = (tagEnd > 0 && tagEnd < rawPayload.length) ? tagEnd : rawPayload.length - 1;
                 int dumpStart = nextIndex >= 0 ? nextIndex : tagStart; 
                 try {
                     s.append(ECUtils.hexDecode(rawPayload, dumpStart, dumpEnd - dumpStart + 1, "ERROR -- Can't decode payload: " + e.getMessage(), hexPerRow, indent));
-                } catch (ECException e1) {
+                } catch (ECDebugException e1) {
                     s.append("Can't decode payload");
                 }
             }

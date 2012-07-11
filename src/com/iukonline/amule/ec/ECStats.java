@@ -2,6 +2,8 @@ package com.iukonline.amule.ec;
 
 import java.util.zip.DataFormatException;
 
+import com.iukonline.amule.ec.exceptions.ECTagParsingException;
+
 public class ECStats {
     
     private byte detailLevel;
@@ -23,7 +25,7 @@ public class ECStats {
     private ECConnState connState;
     
     
-    public ECStats(ECPacket p, byte d) throws ECException {
+    public ECStats(ECPacket p, byte d) throws ECTagParsingException  {
         
         detailLevel = d;
         ECTag t;
@@ -34,15 +36,15 @@ public class ECStats {
             case ECCodes.EC_DETAIL_FULL:
                 t = p.getTagByName(ECCodes.EC_TAG_STATS_UP_OVERHEAD);
                 if (t != null) upOverhead = t.getTagValueUInt();
-                else throw new ECException("Missing EC_TAG_STATS_UP_OVERHEAD in server response", p);
+                else throw new ECTagParsingException("Missing EC_TAG_STATS_UP_OVERHEAD in server response");
                 
                 t = p.getTagByName(ECCodes.EC_TAG_STATS_DOWN_OVERHEAD);
                 if (t != null) downOverhead = t.getTagValueUInt();
-                else throw new ECException("Missing EC_TAG_STATS_DOWN_OVERHEAD in server response", p);
+                else throw new ECTagParsingException("Missing EC_TAG_STATS_DOWN_OVERHEAD in server response");
                 
                 t = p.getTagByName(ECCodes.EC_TAG_STATS_BANNED_COUNT);
                 if (t != null) bannedCount = t.getTagValueUInt();
-                else throw new ECException("Missing EC_TAG_STATS_BANNED_COUNT in server response", p);
+                else throw new ECTagParsingException("Missing EC_TAG_STATS_BANNED_COUNT in server response");
 
                 // Continue to next case...
                 
@@ -51,57 +53,57 @@ public class ECStats {
                 
                 t = p.getTagByName(ECCodes.EC_TAG_STATS_UL_SPEED);
                 if (t != null) ulSpeed = t.getTagValueUInt();
-                else throw new ECException("Missing EC_TAG_STATS_UL_SPEED in server response", p);
+                else throw new ECTagParsingException("Missing EC_TAG_STATS_UL_SPEED in server response");
                 
                 t = p.getTagByName(ECCodes.EC_TAG_STATS_DL_SPEED);
                 if (t != null) dlSpeed = t.getTagValueUInt();
-                else throw new ECException("Missing EC_TAG_STATS_DL_SPEED in server response", p);
+                else throw new ECTagParsingException("Missing EC_TAG_STATS_DL_SPEED in server response");
                 
                 t = p.getTagByName(ECCodes.EC_TAG_STATS_UL_SPEED_LIMIT);
                 if (t != null) ulSpeedLimit = t.getTagValueUInt();
-                else throw new ECException("Missing EC_TAG_STATS_UL_SPEED_LIMIT in server response", p);
+                else throw new ECTagParsingException("Missing EC_TAG_STATS_UL_SPEED_LIMIT in server response");
                 
                 t = p.getTagByName(ECCodes.EC_TAG_STATS_DL_SPEED_LIMIT);
                 if (t != null) dlSpeedLimit = t.getTagValueUInt();
-                else throw new ECException("Missing EC_TAG_STATS_DL_SPEED_LIMIT in server response", p);
+                else throw new ECTagParsingException("Missing EC_TAG_STATS_DL_SPEED_LIMIT in server response");
                 
                 t = p.getTagByName(ECCodes.EC_TAG_STATS_UL_QUEUE_LEN);
                 if (t != null) ulQueueLen = t.getTagValueUInt();
-                else throw new ECException("Missing EC_TAG_STATS_UL_QUEUE_LEN in server response", p);
+                else throw new ECTagParsingException("Missing EC_TAG_STATS_UL_QUEUE_LEN in server response");
                 
                 t = p.getTagByName(ECCodes.EC_TAG_STATS_TOTAL_SRC_COUNT);
                 if (t != null) totalSrcCount = t.getTagValueUInt();
-                else throw new ECException("Missing EC_TAG_STATS_TOTAL_SRC_COUNT in server response", p);
+                else throw new ECTagParsingException("Missing EC_TAG_STATS_TOTAL_SRC_COUNT in server response");
                 
                 t = p.getTagByName(ECCodes.EC_TAG_STATS_ED2K_USERS);
                 if (t != null) ed2kUsers = t.getTagValueUInt();
-                else throw new ECException("Missing EC_TAG_STATS_ED2K_USERS in server response", p);
+                else throw new ECTagParsingException("Missing EC_TAG_STATS_ED2K_USERS in server response");
                 
                 t = p.getTagByName(ECCodes.EC_TAG_STATS_KAD_USERS);
                 if (t != null) kadUsers = t.getTagValueUInt();
-                else throw new ECException("Missing EC_TAG_STATS_KAD_USERS in server response", p);
+                else throw new ECTagParsingException("Missing EC_TAG_STATS_KAD_USERS in server response");
                 
                 t = p.getTagByName(ECCodes.EC_TAG_STATS_ED2K_FILES);
                 if (t != null) ed2kFiles = t.getTagValueUInt();
-                else throw new ECException("Missing EC_TAG_STATS_ED2K_FILES in server response", p);
+                else throw new ECTagParsingException("Missing EC_TAG_STATS_ED2K_FILES in server response");
                 
                 t = p.getTagByName(ECCodes.EC_TAG_STATS_KAD_FILES);
                 if (t != null) kadFiles = t.getTagValueUInt();
-                else throw new ECException("Missing EC_TAG_STATS_KAD_FILES in server response", p);
+                else throw new ECTagParsingException("Missing EC_TAG_STATS_KAD_FILES in server response");
                 
                 t = p.getTagByName(ECCodes.EC_TAG_CONNSTATE);
                 if (t != null) connState = new ECConnState(t, detailLevel);
-                else throw new ECException("Missing EC_TAG_CONNSTATE in server response", p);
+                else throw new ECTagParsingException("Missing EC_TAG_CONNSTATE in server response");
                 
                 break;
                 
             default:
-                throw new ECException("Unknown detail level " + detailLevel + " for EC_STATS",p);
+                throw new ECTagParsingException("Unknown detail level " + detailLevel + " for EC_STATS");
 
             }
             
         } catch (DataFormatException e) {
-            throw new ECException("One or more unexpected type in EC_STATS tags", p, e);
+            throw new ECTagParsingException("One or more unexpected type in EC_STATS tags", e);
         }
         
     }

@@ -8,6 +8,7 @@ import java.util.Iterator;
 import java.util.zip.DataFormatException;
 
 import com.iukonline.amule.ec.ECRawPacket.ECRawTag;
+import com.iukonline.amule.ec.exceptions.ECTagParsingException;
 
 
 
@@ -247,7 +248,7 @@ public class ECTag  {
         return null;
     }
     
-    public long getLength(boolean withHeader, boolean isUTF8Compressed) throws ECException   {
+    public long getLength(boolean withHeader, boolean isUTF8Compressed) throws ECTagParsingException {
         
         //long len = withHeader ? 7 : 0; // ec_tagname_t - uint16, ec_tagtype_t - uint8, ec_taglen_t - uint32
         long len = 0L;
@@ -258,13 +259,13 @@ public class ECTag  {
                 try {
                     len += ECUtils.UTF8Length(tagName << 1); // ec_tagname_t
                 } catch (CharacterCodingException e) {
-                    throw new ECException("Invlid tagName, not UTF-8 encodable: " + tagName, e);
+                    throw new ECTagParsingException("Invlid tagName, not UTF-8 encodable: " + tagName, e);
                 } 
                 len += 1; // ec_tagtype_t
                 try {
                     len += ECUtils.UTF8Length(getLength(false, isUTF8Compressed)); // ec_taglen_t
                 } catch (CharacterCodingException e) {
-                    throw new ECException("Invlid tag length, not UTF-8 encodable: " + len, e);
+                    throw new ECTagParsingException("Invlid tag length, not UTF-8 encodable: " + len, e);
                 } 
             }
         }
@@ -291,7 +292,7 @@ public class ECTag  {
             try {
                 len += tagValueString.getBytes("UTF-8").length + 1;
             } catch (UnsupportedEncodingException e) {
-                throw new ECException("Severe error: UTF-8 not supported for string encoding", e);
+                throw new ECTagParsingException("Severe error: UTF-8 not supported for string encoding", e);
             }
             break;
         case ECTagTypes.EC_TAGTYPE_DOUBLE:
@@ -315,7 +316,7 @@ public class ECTag  {
                     try {
                         len += ECUtils.UTF8Length(subTags.size());
                     } catch (CharacterCodingException e) {
-                        throw new ECException("Invlid tag count, not UTF-8 encodable: " + len, e);
+                        throw new ECTagParsingException("Invlid tag count, not UTF-8 encodable: " + len, e);
                     } 
                 } else {
                     len += 2;
@@ -334,7 +335,7 @@ public class ECTag  {
         return len;
     }
     
-    public long getLength() throws ECException {
+    public long getLength() throws ECTagParsingException {
         return getLength(false, false);
     }
 

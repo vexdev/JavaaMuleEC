@@ -8,11 +8,11 @@ import java.util.zip.DataFormatException;
 import org.junit.Test;
 
 import com.iukonline.amule.ec.ECCodes;
-import com.iukonline.amule.ec.ECException;
 import com.iukonline.amule.ec.ECPacket;
 import com.iukonline.amule.ec.ECRawPacket;
 import com.iukonline.amule.ec.ECTag;
 import com.iukonline.amule.ec.ECTagTypes;
+import com.iukonline.amule.ec.exceptions.ECPacketParsingException;
 
 public class ECRawTest {
 
@@ -21,9 +21,9 @@ public class ECRawTest {
 
     
     @Test
-    public void testTrace() throws IOException, ECException, DataFormatException {
-        File clientFile = new File("test/com/iukonline/amule/ec/test/LongClientRun.bin");
-        File serverFile = new File("test/com/iukonline/amule/ec/test/LongServerRun.bin");
+    public void testTrace() throws IOException, DataFormatException, ECPacketParsingException {
+        File clientFile = new File("test/com/iukonline/amule/ec/test/Login231OKClient.bin");
+        File serverFile = new File("test/com/iukonline/amule/ec/test/Login231OKServer.bin");
         
         FileInputStream clientStream = new FileInputStream(clientFile);
         FileInputStream serverStream = new FileInputStream(serverFile);
@@ -50,14 +50,13 @@ public class ECRawTest {
     }
     
     @Test
-    public void testTags() throws ECException, DataFormatException {
+    public void testTags() throws DataFormatException, ECPacketParsingException {
         ECPacket epReq = new ECPacket();
         epReq.setOpCode(ECCodes.EC_OP_PARTFILE_SWAP_A4AF_THIS);
         byte[] hash = { 0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7, 0x8, 0x9, 0xa, 0xb, 0xc, 0xd, 0xe, 0xf , 0x10};
         epReq.addTag(new ECTag(ECCodes.EC_TAG_PARTFILE, ECTagTypes.EC_TAGTYPE_HASH16, hash));
         @SuppressWarnings("unused")
         ECRawPacket raw = new ECRawPacket(epReq);
-        
     }
 
 }

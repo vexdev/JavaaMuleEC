@@ -6,6 +6,8 @@ package com.iukonline.amule.ec.test;
 import static org.junit.Assert.assertTrue;
 
 import java.net.Socket;
+import java.util.HashMap;
+import java.util.Iterator;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -83,37 +85,23 @@ public class ECClientTest {
         
         
         System.out.print("Running fetchDlQueue...\n");
-        ECPartFile[] dlQueue = cl.getDownloadQueue(ECCodes.EC_DETAIL_CMD);
+        
+        HashMap<String, ECPartFile> dlQueue = cl.getDownloadQueue(ECCodes.EC_DETAIL_CMD);
         
         if (dlQueue != null) {
-            for (int i = 0; i < dlQueue.length; i++) {
-                
-                //ECPartFile d = cl.getDownloadDetails(dlQueue[i]);
-                
-                System.out.println(dlQueue[i].toString());
-                cl.refreshPartFile(dlQueue[i], ECCodes.EC_DETAIL_CMD);
-                
-                
-                
-                
-               /* System.out.format("Filename: %s\nHash: %s\nStatus: %d - Done: %d/%d - Speed: %d - Prio: %d\n\n", 
-                                dlQueue[i].getFileName(), 
-                                ECUtils.byteArrayToHexString(dlQueue[i].getHash(), 16),
-                                dlQueue[i].getStatus(),
-                                dlQueue[i].getSizeDone(), 
-                                dlQueue[i].getSizeFull(),
-                                dlQueue[i].getSpeed(),
-                                dlQueue[i].getPrio()
-                                );*/
+            
+            for (Iterator<ECPartFile> i = dlQueue.values().iterator(); i.hasNext(); ) {
+                ECPartFile p = i.next();
+                System.out.println(p.toString());
+                cl.refreshPartFile(p, ECCodes.EC_DETAIL_CMD);
             }
             
-            //dlQueue[0].swapA4AFThis();
-            //dlQueue[0].changePriority(dlQueue[0].getPrio());
             
-            for (int i = 0; i < dlQueue.length; i++) {
-                if (dlQueue[i].getSourceNames().size() > 0) System.out.println("hasSourceNames --- " + dlQueue[i].toString());
+            cl.refreshDlQueue(dlQueue);
+            for (Iterator<ECPartFile> i = dlQueue.values().iterator(); i.hasNext(); ) {
+                ECPartFile p = i.next();
+                System.out.println(p.toString());
             }
-            
             
         }
         

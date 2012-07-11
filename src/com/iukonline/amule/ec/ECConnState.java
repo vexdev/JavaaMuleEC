@@ -2,6 +2,8 @@ package com.iukonline.amule.ec;
 
 import java.util.zip.DataFormatException;
 
+import com.iukonline.amule.ec.exceptions.ECTagParsingException;
+
 public class ECConnState {
     
     private final static int CONNECTED_ED2K             = 0x1;
@@ -20,7 +22,7 @@ public class ECConnState {
     private ECServer server;
     
     
-    public ECConnState(ECTag t1, byte d) throws ECException   {
+    public ECConnState(ECTag t1, byte d) throws ECTagParsingException   {
         
         detailLevel = d;
         ECTag t;
@@ -37,26 +39,26 @@ public class ECConnState {
                 if (isConnectedEd2k()) {
                     t = t1.getSubTagByName(ECCodes.EC_TAG_SERVER);
                     if (t != null) server = new ECServer(t, detailLevel);
-                    else throw new ECException("Missing EC_TAG_SERVER in server response");
+                    else throw new ECTagParsingException("Missing EC_TAG_SERVER in server response");
                     
                     t = t1.getSubTagByName(ECCodes.EC_TAG_ED2K_ID);
                     if (t != null) ed2kId = t.getTagValueUInt();
-                    else throw new ECException("Missing EC_TAG_ED2K_ID in server response");           
+                    else throw new ECTagParsingException("Missing EC_TAG_ED2K_ID in server response");           
                 }
                 
                 t = t1.getSubTagByName(ECCodes.EC_TAG_CLIENT_ID);
                 if (t != null) clientId = t.getTagValueUInt();
-                else throw new ECException("Missing EC_TAG_CLIENT_ID in server response");     
+                else throw new ECTagParsingException("Missing EC_TAG_CLIENT_ID in server response");     
                 
                 break;
                 
             default:
-                throw new ECException("Unknown detail level " + detailLevel + " for EC_TAG_SERVER");
+                throw new ECTagParsingException("Unknown detail level " + detailLevel + " for EC_TAG_SERVER");
 
             }
             
         } catch (DataFormatException e) {
-            throw new ECException("One or more unexpected type in EC_TAG_SERVER tags", e);
+            throw new ECTagParsingException("One or more unexpected type in EC_TAG_SERVER tags", e);
         }
         
     }

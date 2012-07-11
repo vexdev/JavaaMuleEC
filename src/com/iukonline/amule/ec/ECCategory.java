@@ -2,11 +2,15 @@ package com.iukonline.amule.ec;
 
 import java.util.zip.DataFormatException;
 
+import com.iukonline.amule.ec.exceptions.ECTagParsingException;
+
 public class ECCategory {
+    
+    public static final long NEW_CATEGORY_ID = 0xffffffffL;
 
     private byte detailLevel;
     
-    private long id = 0xffffffffL;
+    private long id = NEW_CATEGORY_ID;
     private String title;
     private String path;
     private String comment;
@@ -21,7 +25,7 @@ public class ECCategory {
         prio = p2;
     }
     
-    public ECCategory(ECTag t1, byte d) throws ECException   {
+    public ECCategory(ECTag t1, byte d) throws ECTagParsingException {
         
         detailLevel = d;
         ECTag t;
@@ -34,20 +38,20 @@ public class ECCategory {
                 
                 t = t1.getSubTagByName(ECCodes.EC_TAG_CATEGORY_PATH);
                 if (t != null) path = t.getTagValueString();
-                else throw new ECException("Missing EC_TAG_CATEGORY_PATH in server response");
+                else throw new ECTagParsingException("Missing EC_TAG_CATEGORY_PATH in server response");
                 
                 t = t1.getSubTagByName(ECCodes.EC_TAG_CATEGORY_COMMENT);
                 if (t != null) comment = t.getTagValueString();
-                else throw new ECException("Missing EC_TAG_CATEGORY_COMMENT in server response");
+                else throw new ECTagParsingException("Missing EC_TAG_CATEGORY_COMMENT in server response");
                 
                 
                 t = t1.getSubTagByName(ECCodes.EC_TAG_CATEGORY_COLOR);
                 if (t != null) color = t.getTagValueUInt();
-                else throw new ECException("Missing EC_TAG_CATEGORY_COLOR in server response");
+                else throw new ECTagParsingException("Missing EC_TAG_CATEGORY_COLOR in server response");
                 
                 t = t1.getSubTagByName(ECCodes.EC_TAG_CATEGORY_PRIO);
                 if (t != null) prio = (byte) t.getTagValueUInt();
-                else throw new ECException("Missing EC_TAG_CATEGORY_PRIO in server response");
+                else throw new ECTagParsingException("Missing EC_TAG_CATEGORY_PRIO in server response");
                 
                 
             case ECCodes.EC_DETAIL_CMD:
@@ -56,17 +60,17 @@ public class ECCategory {
                 
                 t = t1.getSubTagByName(ECCodes.EC_TAG_CATEGORY_TITLE);
                 if (t != null) title = t.getTagValueString();
-                else throw new ECException("Missing EC_TAG_CATEGORY_TITLE in server response");
+                else throw new ECTagParsingException("Missing EC_TAG_CATEGORY_TITLE in server response");
                 
                 break;
                 
             default:
-                throw new ECException("Unknown detail level " + detailLevel + " for EC_TAG_SERVER");
+                throw new ECTagParsingException("Unknown detail level " + detailLevel + " for EC_TAG_SERVER");
 
             }
             
         } catch (DataFormatException e) {
-            throw new ECException("One or more unexpected type in EC_TAG_PREFS_CATEGORIES tags", e);
+            throw new ECTagParsingException("One or more unexpected type in EC_TAG_PREFS_CATEGORIES tags", e);
         }
 
     }
