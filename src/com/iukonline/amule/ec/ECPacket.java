@@ -3,6 +3,7 @@ package com.iukonline.amule.ec;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Formatter;
 import java.util.Iterator;
@@ -12,7 +13,6 @@ import com.iukonline.amule.ec.exceptions.ECPacketParsingException;
 
 
 public class ECPacket {
-    
     
     private byte opCode = ECCodes.EC_OP_NOOP;
     private ArrayList<ECTag> tags;
@@ -28,6 +28,10 @@ public class ECPacket {
     
     private ECRawPacket encodedPacket;
     
+    public ECRawPacket getEncodedPacket() {
+        return encodedPacket;
+    }
+
     public ECPacket() {
         tags = new ArrayList<ECTag>();
     }
@@ -50,7 +54,7 @@ public class ECPacket {
     public byte getOpCode() { return opCode; }
     public void setOpCode(byte opCode) { this.opCode = opCode; }
     
-    ECRawPacket getRawPacket() { return encodedPacket; }
+    public ECRawPacket getRawPacket() { return encodedPacket; }
     
     public void addTag(ECTag tag) { tags.add(tag); }
     
@@ -71,13 +75,31 @@ public class ECPacket {
     }
     
 
-    public void writeToStream(OutputStream out) throws IOException, ECPacketParsingException  {
-        encodedPacket = new ECRawPacket(this);
+    public void writeToStream(OutputStream out, Class <? extends ECRawPacket> parser) throws ECPacketParsingException, IOException   {
+        //encodedPacket = new ECRawPacket(this);
+        
+        try {
+            encodedPacket = parser.getConstructor(ECPacket.class).newInstance(this);
+        } catch (Exception e) {
+            throw new ECPacketParsingException("Cannot get a packet parser", null, e);
+        }
         out.write(encodedPacket.asByteArray());
     }
     
-    public static ECPacket readFromStream(InputStream in) throws IOException, ECPacketParsingException {
-        ECRawPacket raw = new ECRawPacket(in);
+    public void writeToStream(OutputStream out) throws ECPacketParsingException, IOException {
+        writeToStream(out, ECRawPacket.class);
+    }
+    
+    public static ECPacket readFromStream(InputStream in, Class <? extends ECRawPacket> parser) throws IOException, ECPacketParsingException {
+        
+        ECRawPacket raw;
+        try {
+            raw = parser.getConstructor(InputStream.class).newInstance(in);
+        } catch (Exception e) {
+            throw new ECPacketParsingException("Cannot get a packet parser", null, e);
+        }
+        
+        //ECRawPacket raw = new ECRawPacket(in);
         ECPacket n;
         n = raw.parse();
         n.encodedPacket = raw;
@@ -85,6 +107,9 @@ public class ECPacket {
 
     }
     
+    public static ECPacket readFromStream(InputStream in) throws IOException, ECPacketParsingException {
+        return readFromStream(in, ECRawPacket.class);
+    }    
     
     
     @Override

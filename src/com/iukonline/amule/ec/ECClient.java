@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
+import java.lang.reflect.InvocationTargetException;
 import java.net.Socket;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -17,11 +18,15 @@ import com.iukonline.amule.ec.exceptions.ECClientException;
 import com.iukonline.amule.ec.exceptions.ECPacketParsingException;
 import com.iukonline.amule.ec.exceptions.ECServerException;
 import com.iukonline.amule.ec.exceptions.ECTagParsingException;
+import com.iukonline.amule.ec.v204.ECCodesV204;
 
 
 
 
 public class ECClient {
+    
+    protected Class <? extends ECRawPacket> packetParser = ECRawPacket.class;
+    protected Class <? extends ECPartFile> partFileBuilder = ECPartFile.class;
     
     private final static boolean FORCE_TRY_LOGIN_BEFORE = true; 
     // Must be true to ensure compatibiliy with 2.2.2.
@@ -29,15 +34,18 @@ public class ECClient {
 
     private byte defaultDetailLevel = ECCodes.EC_DETAIL_FULL;
     
-    private String clientName;
-    private String clientVersion;
-    private byte[] hashedPassword;
+    protected String clientName;
+    protected String clientVersion;
+    protected byte[] hashedPassword;
     private Socket socket;
-    private PrintStream tracer;
+    protected PrintStream tracer;
     
     private String serverVersion;
     
     private boolean isLoggedIn = false;
+    
+    protected boolean acceptUTF8 = true;
+    protected boolean acceptZlib = true;
     
     public void setClientName(String clientName) {
         this.clientName = clientName;
@@ -77,7 +85,7 @@ public class ECClient {
         if (tracer != null) tracer.print("Sending EC packet...\n" + epReq.toString() + "\n\n");
 
         try {
-            epReq.writeToStream(os);
+            epReq.writeToStream(os, packetParser);
         } catch (ECPacketParsingException e) {
             throw new ECPacketParsingException("Error sending request", epReq.getRawPacket(), e);
         }
@@ -87,7 +95,7 @@ public class ECClient {
         BufferedInputStream is = new BufferedInputStream(socket.getInputStream());
         ECPacket epResp;
         try {
-            epResp = ECPacket.readFromStream(is);
+            epResp = ECPacket.readFromStream(is, packetParser);
         } catch (ECPacketParsingException e) {
             throw new ECPacketParsingException("Error reading response", e.getCausePacket(), e);
         }
@@ -117,10 +125,7 @@ public class ECClient {
         return sendRequestAndWaitResponse(epReq, true);
     }
     
-    
-
-    public boolean login() throws IOException, ECPacketParsingException, ECServerException, ECClientException  {
-        
+    protected ECPacket buildLoginRequest() throws ECClientException {
         ECPacket epReq = new ECPacket();
         epReq.setOpCode(ECCodes.EC_OP_AUTH_REQ);
         try {
@@ -131,8 +136,10 @@ public class ECClient {
         } catch (DataFormatException e) {
             throw new ECClientException("Cannot create login request", e);
         }
-        
-        ECPacket epResp = sendRequestAndWaitResponse(epReq, false);
+        return epReq;
+    }
+    
+    protected boolean parseLoginResponse(ECPacket epReq, ECPacket epResp) throws ECPacketParsingException, ECServerException, ECClientException, IOException {
         switch (epResp.getOpCode()) {
         case ECCodes.EC_OP_AUTH_OK:
             ECTag versionTag = epResp.getTagByName(ECCodes.EC_TAG_SERVER_VERSION);
@@ -157,25 +164,32 @@ public class ECClient {
             throw new ECServerException("Login failed - " + errMsg, epReq, epResp);
         default:
             throw new ECPacketParsingException("Unexpected response to login request", epResp.getRawPacket());
-        }
+        }        
+    }
+
+    public boolean login() throws IOException, ECPacketParsingException, ECServerException, ECClientException  {
+        ECPacket epReq = buildLoginRequest();
+        ECPacket epResp = sendRequestAndWaitResponse(epReq, false);
+        return parseLoginResponse(epReq, epResp);
     }
     
     
 
-    
-    
-    private ECPacket sendGetDloadQueueReq(byte[] hash, byte detailLevel) throws IOException, ECClientException, ECPacketParsingException, ECServerException {
+    protected ECPacket sendGetDloadQueueReq(ECPartFile p, byte detailLevel) throws IOException, ECClientException, ECPacketParsingException, ECServerException {
+            
             ECPacket epReq = new ECPacket();
             
             try {
                 epReq.addTag(new ECTag(ECCodes.EC_TAG_DETAIL_LEVEL, ECTagTypes.EC_TAGTYPE_UINT8, detailLevel));
             } catch (DataFormatException e) {
-                // Should nevere happen
+                // Should never happen
                 throw new ECClientException("Cannot greate GetDloadQueue request", e);
             }
             
-            if (hash != null) {
+            if (p != null) {
+                byte hash[] = p.getHash();
                 epReq.setOpCode(ECCodes.EC_OP_GET_DLOAD_QUEUE_DETAIL);
+                
                 try {
                     epReq.addTag(new ECTag(ECCodes.EC_TAG_PARTFILE, ECTagTypes.EC_TAGTYPE_HASH16, hash ));
                 } catch (DataFormatException e) {
@@ -191,35 +205,41 @@ public class ECClient {
             
             switch (epResp.getOpCode()) {
             case ECCodes.EC_OP_DLOAD_QUEUE:
-                if (hash != null && epResp.getTags().size() > 1) throw new ECPacketParsingException("Unexpected response for single part file GET_DLOAD_QUEUE", epResp.getRawPacket());
+                if (p != null && epResp.getTags().size() > 1) throw new ECPacketParsingException("Unexpected response for single part file GET_DLOAD_QUEUE", epResp.getRawPacket());
                 return epResp;
             default:
                 throw new ECPacketParsingException("Unexpected response for GET_DLOAD_QUEUE", epResp.getRawPacket());
             }        
     }
     
-    public ECPartFile getPartFile(byte[] hash, byte detailLevel) throws IOException, ECClientException, ECPacketParsingException, ECServerException {
+    /*
+    protected ECPartFile getPartFile(byte[] hash, byte detailLevel) throws IOException, ECClientException, ECPacketParsingException, ECServerException {
         ECPacket partFilePacket = sendGetDloadQueueReq(hash, detailLevel);
         try {
-            return (partFilePacket.getTags().size() == 0) ? null : new ECPartFile(partFilePacket.getTagByName(ECCodes.EC_TAG_PARTFILE), detailLevel);
-        } catch (ECTagParsingException e) {
-            throw new ECPacketParsingException("Error parsing partFile packet", partFilePacket.getRawPacket(), e);
+            return (partFilePacket.getTags().size() == 0) ? null : partFileBuilder.getConstructor(ECTag.class, Byte.TYPE).newInstance(partFilePacket.getTagByName(ECCodes.EC_TAG_PARTFILE), detailLevel);
+        } catch (InvocationTargetException e) {
+            if (e.getCause() instanceof ECTagParsingException) {
+                throw new ECPacketParsingException("Error parsing partFile packet", partFilePacket.getRawPacket(), e.getCause());
+            } else {
+                throw new ECPacketParsingException("Error creating partFile builder", partFilePacket.getRawPacket(), e);
+            }
+        } catch (Exception e) {
+            throw new ECPacketParsingException("Error creating partFile builder", partFilePacket.getRawPacket(), e);
         }
     }
     
-    public ECPartFile getPartFile(byte[] hash) throws IOException, ECClientException, ECPacketParsingException, ECServerException {
+    protected ECPartFile getPartFile(byte[] hash) throws IOException, ECClientException, ECPacketParsingException, ECServerException {
         return getPartFile(hash, defaultDetailLevel);
-    }
+    }*/
     
     public void refreshPartFile(ECPartFile p, byte detailLevel) throws IOException, ECClientException, ECPacketParsingException, ECServerException {
-        ECPacket partFilePacket = sendGetDloadQueueReq(p.getHash(), detailLevel);
+        ECPacket partFilePacket = sendGetDloadQueueReq(p, detailLevel);
         if (partFilePacket.getTags().isEmpty()) throw new ECClientException("Part file not found");
         try {
             p.fillFromTag(partFilePacket.getTagByName(ECCodes.EC_TAG_PARTFILE), detailLevel);
         } catch (ECTagParsingException e) {
             throw new ECPacketParsingException("Error parsing partFile packet", partFilePacket.getRawPacket(), e);
         }
-
     }
     
     public void refreshPartFile(ECPartFile p) throws IOException, ECClientException, ECPacketParsingException, ECServerException {
@@ -237,9 +257,16 @@ public class ECClient {
         for (int i = 0; i < tags.size(); i++) {
             ECPartFile p;
             try {
-                p = new ECPartFile(tags.get(i), detailLevel);
-            } catch (ECTagParsingException e) {
-                throw new ECPacketParsingException("Error parsing partFile packet", partFilePacket.getRawPacket(), e);
+                // p = new ECPartFile(tags.get(i), detailLevel);
+                p = partFileBuilder.getConstructor(ECTag.class, Byte.TYPE).newInstance(tags.get(i), detailLevel);
+            } catch (InvocationTargetException e) {
+                if (e.getCause() instanceof ECTagParsingException) {
+                    throw new ECPacketParsingException("Error parsing partFile packet", partFilePacket.getRawPacket(), e.getCause());
+                } else {
+                    throw new ECPacketParsingException("Error creating partFile builder", partFilePacket.getRawPacket(), e);
+                }
+            } catch (Exception e) {
+                throw new ECPacketParsingException("Error creating partFile builder", partFilePacket.getRawPacket(), e);
             }
             dlQueue.put(ECUtils.byteArrayToHexString(p.getHash()), p);
         }

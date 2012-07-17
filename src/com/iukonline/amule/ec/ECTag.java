@@ -186,9 +186,7 @@ public class ECTag  {
         } else {
             throw new DataFormatException("Tag type is not DOUBLE");
         }
-        
     }
-    
     
     public int getTagName() {
         return tagName;

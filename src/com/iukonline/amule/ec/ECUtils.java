@@ -8,12 +8,13 @@ import com.iukonline.amule.ec.exceptions.ECDebugException;
 
 public class ECUtils {
     
-    static byte[] uintToBytes(long uint, int numBytes, boolean MSB) {
+    public static byte[] uintToBytes(long uint, int numBytes, boolean MSB) {
         byte[] ret = new byte[numBytes];
         
         long mask = 0xFF;
         for (int i = 0; i < numBytes; i++) {
             ret[MSB ? numBytes - 1 - i : i] = (byte)((uint & (mask << i * 8)) >> (i * 8));
+            //System.out.println("INDEX " + (MSB ? numBytes - 1 - i : i ) + " VALUE " + ret[MSB ? numBytes - 1 - i : i] );
         }
         
         return ret;
@@ -25,12 +26,12 @@ public class ECUtils {
     }
     
     static long bytesToUint(byte[] input, int numBytes, boolean MSB, boolean debug) {
-        return bytesToUint(input, 0, numBytes, MSB, false);
+        return bytesToUint(input, 0, numBytes, MSB, debug);
     }
     
     static long bytesToUint(byte[] input, int offset, int numBytes, boolean MSB, boolean debug) {
         
-        debug = false;
+        //debug = false;
         
         if (debug)
             System.out.println("bytesToUint: converting " + numBytes + " bytes starting from " +offset + " - "+ byteArrayToHexString(input, numBytes, offset));
@@ -63,11 +64,9 @@ public class ECUtils {
                 }
             }
             
-            if (debug)
-                System.out.println("bytesToUint: Partial result - " + ret);
+            if (debug) System.out.println("bytesToUint: Partial result - " + ret);
         }
-        if (debug)
-            System.out.println("bytesToUint: Final result - " + ret);
+        if (debug) System.out.println("bytesToUint: Final result - " + ret);
         
         return ret;
     }
@@ -89,7 +88,11 @@ public class ECUtils {
         return byteArrayToHexString(in, max, 0);
     }
     
-    static String byteArrayToHexString(byte in[], int max, int offset) {
+    public static String byteArrayToHexString(byte in[], int max, int offset) {
+        return byteArrayToHexString(in, max, offset, " ");
+    }
+    
+    public static String byteArrayToHexString(byte in[], int max, int offset, String separator) {
 
         byte ch = 0x00;
         int i = offset; 
@@ -100,8 +103,8 @@ public class ECUtils {
         String pseudo[] = {"0", "1", "2","3", "4", "5", "6", "7", "8","9", "A", "B", "C", "D", "E","F"};
         StringBuffer out = new StringBuffer(in.length * 3 - 1);
         while (i < max + offset) {
-            if (i > offset)
-                out.append(' ');
+            if (i > offset && separator != null)
+                out.append(separator);
             ch = (byte) (in[i] & 0xF0); // Strip off high nibble
             ch = (byte) (ch >>> 4);     // shift the bits down
             ch = (byte) (ch & 0x0F);    // must do this as high order bit is on!

@@ -20,6 +20,7 @@ import com.iukonline.amule.ec.ECClient;
 import com.iukonline.amule.ec.ECCodes;
 import com.iukonline.amule.ec.ECPartFile;
 import com.iukonline.amule.ec.ECStats;
+import com.iukonline.amule.ec.v204.ECClientV204;
 
 /**
  * @author ***REMOVED***
@@ -28,9 +29,11 @@ import com.iukonline.amule.ec.ECStats;
 public class ECClientTest {
 
     
-    final static String SERVER_HOST = "***REMOVED***";
+    // final static String SERVER_HOST = "***REMOVED***";
+    final static String SERVER_HOST = "192.168.56.101";
     final static int SERVER_PORT = 4712;
-    final static String SERVER_PASSWORD = "***REMOVED***";
+    // final static String SERVER_PASSWORD = "***REMOVED***";
+    final static String SERVER_PASSWORD = "test";
     
     static ECClient cl;
     static Socket socket;
@@ -41,7 +44,7 @@ public class ECClientTest {
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
         
-        cl = new ECClient();
+        cl = new ECClientV204();
         try {
             cl.setPassword(SERVER_PASSWORD);
         } catch (Exception e) {

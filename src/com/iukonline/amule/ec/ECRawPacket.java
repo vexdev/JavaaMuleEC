@@ -19,14 +19,13 @@ public class ECRawPacket {
     
     final static int hexPerRow = 16;
     final static int EC_FLAG_DEFAULT_ACCEPTS = ECCodes.EC_FLAG_UTF8_NUMBERS | ECCodes.EC_FLAG_ZLIB;  
-
     
-    byte [] rawFlags;
-    byte [] rawAccepts;
-    byte [] rawLen;
-    byte [] rawPayload;
-    byte [] compressedPayload;
-    ECRawTag[] rawTagsList;
+    protected byte [] rawFlags;
+    protected byte [] rawAccepts;
+    protected byte [] rawLen;
+    protected byte [] rawPayload;
+    protected byte [] compressedPayload;
+    protected ECRawTag[] rawTagsList;
     
     long flags = 0x20L;
     long accepts = EC_FLAG_DEFAULT_ACCEPTS;
@@ -39,7 +38,14 @@ public class ECRawPacket {
     int tagsIndex;
     
     boolean debug = false;
-
+    
+    protected ECRawTag getNewECRawTag(ECTag t, int startIndex) throws ECPacketParsingException {
+        return new ECRawTag(t, startIndex);
+    }
+    
+    protected ECRawTag getNewECRawTag(int index)  {
+        return new ECRawTag(index);
+    }
 
     public ECRawPacket (InputStream is) throws IOException, ECPacketParsingException {
         
@@ -121,7 +127,6 @@ public class ECRawPacket {
         
         // TODO: UTF-8 Compression
 
-        
         setUTF8Compressed(p.isUTF8Compressed());
         setZlibCompressed(p.isZlibCompressed());
         setAcceptsUTF8(p.acceptsUTF8());
@@ -168,7 +173,7 @@ public class ECRawPacket {
             rawTagsList = new ECRawTag[tags.size()];
             int index = tagsIndex;
             for (int i = 0; i < tags.size(); i++) {
-                rawTagsList[i] = new ECRawTag(tags.get(i), index);
+                rawTagsList[i] = getNewECRawTag(tags.get(i), index);
                 if (debug) System.out.println("ECRawPacket: packet dump after tag " + i + ":\n" + this.dump());
                 index = rawTagsList[i].tagEnd + 1;
             }
@@ -204,7 +209,7 @@ public class ECRawPacket {
        
         while (index < rawPayload.length && tagCounter < tagsCount) {
             if (debug) System.out.println("ECRawPacket.parse: parsing tag " + tagCounter + " starting at " + index);
-            ECRawTag t = new ECRawTag(index);
+            ECRawTag t = getNewECRawTag(index);
             ep.addTag(t.parse());
             index = t.getTagEnd() + 1;
             rawTagsList[tagCounter++] = t;
@@ -308,7 +313,7 @@ public class ECRawPacket {
         }
     }  
     
-    private String getOpCodeString() {
+    protected String getOpCodeString() {
         switch(rawPayload[0]) {
         case ECCodes.EC_OP_NOOP: return "EC_OP_NOOP";
         case ECCodes.EC_OP_AUTH_REQ: return "EC_OP_AUTH_REQ";
@@ -478,7 +483,7 @@ public class ECRawPacket {
     
     
     
-    class ECRawTag {
+    protected class ECRawTag {
         //ECRawPacket rawPacket;
         int tagStart;
         int tagEnd;
@@ -529,7 +534,7 @@ public class ECRawPacket {
                 rawSubTagsList = new ECRawTag[subTags.size()];
                 for (int i = 0; i < subTags.size(); i++) {
                     if (debug) System.out.println("ECRawTag: adding subTag " + i + ":\n");
-                    ECRawTag sub = new ECRawTag(subTags.get(i), tagValueIndex);
+                    ECRawTag sub = getNewECRawTag(subTags.get(i), tagValueIndex);
                     if (debug) System.out.println("ECRawTag: packet dump after setting suBTag " + i + ":\n" + ECRawPacket.this.dump());
                     tagValueIndex = sub.tagEnd + 1;
                     tagLen += sub.getUncompressedTagLength();
@@ -673,7 +678,7 @@ public class ECRawPacket {
                 int remainingLen = tagLen; 
                 while (tagCounter < subTagsCount && remainingLen > 0) {
                     if (debug) System.out.println("ECRawPacket.parse: parsing tag " + tagCounter + " starting at " + index);
-                    ECRawTag t = new ECRawTag(index);
+                    ECRawTag t = getNewECRawTag(index);
                     et.addSubTag(t.parse());
                     index = t.getTagEnd() + 1;
                     remainingLen -= t.getUncompressedTagLength();
@@ -727,7 +732,7 @@ public class ECRawPacket {
                     et.setTagValueUInt(ECUtils.bytesToUint(value, 2, true));            
                     break;
                 case ECTagTypes.EC_TAGTYPE_UINT32:
-                    if (value.length != 4) throw new ECPacketParsingException("ECTag: Wrong length for UINT8 tag (" + value.length + ")", ECRawPacket.this);
+                    if (value.length != 4) throw new ECPacketParsingException("Wrong length for UINT8 tag (" + value.length + ")", ECRawPacket.this);
                     et.setTagValueUInt(ECUtils.bytesToUint(value, 4, true));            
                     break;
                 case ECTagTypes.EC_TAGTYPE_UINT64:
@@ -878,7 +883,7 @@ public class ECRawPacket {
             setUnshiftedTagName(tagName);
         }
         
-        private String getTagNameString() {
+        protected String getTagNameString() {
             try {
                 switch(getTagName()) {
                 case ECCodes.EC_TAG_STRING: return "EC_TAG_STRING";

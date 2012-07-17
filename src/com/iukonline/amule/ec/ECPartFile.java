@@ -40,37 +40,37 @@ public class ECPartFile {
     public final static byte RATING_EXCELLENT                = 0x5;
     
     
-    private byte detailLevel;
+    protected byte detailLevel;
 
     
-    private byte[] hash;           
-    private String fileName;        
-    private String ed2kLink;       
-    private byte status;      
-    private byte prio;        
-    private long cat;
-    private int sourceCount;  
-    private int metID;
+    protected byte[] hash;           
+    protected String fileName;        
+    protected String ed2kLink;       
+    protected byte status;      
+    protected byte prio;        
+    protected long cat;
+    protected int sourceCount;  
+    protected int metID;
 
-    private int sourceA4AF;   
-    private int sourceXfer;   
-    private int sourceNotCurrent;
+    protected int sourceA4AF;   
+    protected int sourceXfer;   
+    protected int sourceNotCurrent;
 
-    private long sizeXfer;
-    private long sizeFull;       
-    private long sizeDone;       
-    private long speed;          
+    protected long sizeXfer;
+    protected long sizeFull;       
+    protected long sizeDone;       
+    protected long speed;          
     
-    private Date lastSeenComp;
-    private Date lastRecv;
+    protected Date lastSeenComp;
+    protected Date lastRecv;
     
-    private byte[] partStatus;
-    private byte[] gapStatus;
-    private byte[] reqStatus;
+    protected byte[] partStatus;
+    protected byte[] gapStatus;
+    protected byte[] reqStatus;
     
-    private int commentCount;
-    private ArrayList<ECPartFileComment> comments;
-    private ArrayList<ECPartFileSourceName> sourceNames;
+    protected int commentCount;
+    protected ArrayList<ECPartFileComment> comments;
+    protected ArrayList<ECPartFileSourceName> sourceNames;
     
 
     public ECPartFile() {
@@ -84,17 +84,22 @@ public class ECPartFile {
         fillFromTag(t, d);
     }
     
+    protected byte[] getHashFromTag(ECTag pt) throws ECTagParsingException {
+        try {
+            return pt.getTagValueHash();
+        } catch (DataFormatException e) {
+            throw new ECTagParsingException("Unexpected tag type " + pt.getTagType(), e);        
+        }
+    }
+    
     public void fillFromTag(ECTag pt, byte d) throws ECTagParsingException {
         
         detailLevel = d;
         
         if (pt.getTagName() != ECCodes.EC_TAG_PARTFILE) throw new ECTagParsingException("Unexpected tag name " + pt.getTagName());
         
-        try {
-            hash = pt.getTagValueHash();
-        } catch (DataFormatException e) {
-            throw new ECTagParsingException("Unexpected tag type " + pt.getTagType());
-        }
+        hash = getHashFromTag(pt);
+
         
         ECTag t;
 
@@ -165,17 +170,17 @@ public class ECPartFile {
                 if (t != null) ed2kLink = t.getTagValueString();
                 else throw new ECTagParsingException("Missing EC_TAG_PARTFILE_ED2K_LINK in server response");     
 
-                t = pt.getSubTagByName(ECCodes.EC_TAG_PARTFILE_PART_STATUS);
-                if (t != null) partStatus = t.getTagValueCustom();
-                else throw new ECTagParsingException("Missing EC_TAG_PARTFILE_PART_STATUS in server response"); 
+                //t = pt.getSubTagByName(ECCodes.EC_TAG_PARTFILE_PART_STATUS);
+                //if (t != null) partStatus = t.getTagValueCustom();
+                //else throw new ECTagParsingException("Missing EC_TAG_PARTFILE_PART_STATUS in server response"); 
 
                 t = pt.getSubTagByName(ECCodes.EC_TAG_PARTFILE_GAP_STATUS);
                 if (t != null) gapStatus = t.getTagValueCustom();
                 else throw new ECTagParsingException("Missing EC_TAG_PARTFILE_GAP_STATUS in server response"); 
                 
-                t = pt.getSubTagByName(ECCodes.EC_TAG_PARTFILE_REQ_STATUS);
-                if (t != null) reqStatus = t.getTagValueCustom();
-                else throw new ECTagParsingException("Missing EC_TAG_PARTFILE_REQ_STATUS in server response"); 
+                //t = pt.getSubTagByName(ECCodes.EC_TAG_PARTFILE_REQ_STATUS);
+                //if (t != null) reqStatus = t.getTagValueCustom();
+                //else throw new ECTagParsingException("Missing EC_TAG_PARTFILE_REQ_STATUS in server response"); 
 
 
                 
@@ -209,7 +214,8 @@ public class ECPartFile {
                         while(itr.hasNext()) comments.add(new ECPartFileComment(itr));
                         commentCount = comments.size();
                     } else {
-                        commentCount = (int) t.getTagValueUInt();
+                        //commentCount = (int) t.getTagValueUInt();
+                        commentCount = 0;
                     }
                 }
 
