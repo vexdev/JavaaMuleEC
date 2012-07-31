@@ -32,14 +32,16 @@ public class ECServer {
             switch (detailLevel) {
             case ECCodes.EC_DETAIL_FULL:
                 
+                // TODO NOT ALWAYS PRESENT IN 2.3.1... WHY?
+                /*
                 t = t1.getSubTagByName(ECCodes.EC_TAG_SERVER_PING);
                 if (t != null) serverPing = t.getTagValueUInt();
                 else throw new ECTagParsingException("Missing EC_TAG_SERVER_PING in server response");
                 
-                
                 t = t1.getSubTagByName(ECCodes.EC_TAG_SERVER_PRIO);
                 if (t != null) serverPrio = (byte) t.getTagValueUInt();
                 else throw new ECTagParsingException("Missing EC_TAG_SERVER_PRIO in server response");
+                */
                 
                 t = t1.getSubTagByName(ECCodes.EC_TAG_SERVER_VERSION);
                 if (t != null) serverVersion = t.getTagValueString();

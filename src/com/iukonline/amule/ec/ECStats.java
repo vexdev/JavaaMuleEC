@@ -6,23 +6,23 @@ import com.iukonline.amule.ec.exceptions.ECTagParsingException;
 
 public class ECStats {
     
-    private byte detailLevel;
+    protected byte detailLevel;
     
-    private long upOverhead;
-    private long downOverhead;
-    private long bannedCount;
-    private long ulSpeed;
-    private long dlSpeed;
-    private long ulSpeedLimit;
-    private long dlSpeedLimit;
-    private long ulQueueLen;
-    private long totalSrcCount;
-    private long ed2kUsers;
-    private long kadUsers;
-    private long ed2kFiles;
-    private long kadFiles;
+    protected long upOverhead;
+    protected long downOverhead;
+    protected long bannedCount;
+    protected long ulSpeed;
+    protected long dlSpeed;
+    protected long ulSpeedLimit;
+    protected long dlSpeedLimit;
+    protected long ulQueueLen;
+    protected long totalSrcCount;
+    protected long ed2kUsers;
+    protected long kadUsers;
+    protected long ed2kFiles;
+    protected long kadFiles;
     
-    private ECConnState connState;
+    protected ECConnState connState;
     
     
     public ECStats(ECPacket p, byte d) throws ECTagParsingException  {
@@ -106,6 +106,10 @@ public class ECStats {
             throw new ECTagParsingException("One or more unexpected type in EC_STATS tags", e);
         }
         
+    }
+
+
+    public ECStats() {
     }
 
 

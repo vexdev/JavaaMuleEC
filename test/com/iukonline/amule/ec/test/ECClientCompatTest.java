@@ -24,18 +24,19 @@ import com.iukonline.amule.ec.v204.ECClientV204;
  */
 public class ECClientCompatTest {
 
-    
+    /*
     protected static String SERVER_HOST = "***REMOVED***";
     protected static int SERVER_PORT = 4712;
     protected static String SERVER_PASSWORD = "***REMOVED***";    
     protected static ECClient cl = new ECClient();
+    */
     
-    /*
     protected static String SERVER_HOST = "192.168.56.101";
     protected static int SERVER_PORT = 4712;
     protected static String SERVER_PASSWORD = "test";    
     protected static ECClient cl = new ECClientV204();
-    */
+    //protected static ECClient cl = new ECClientFake();
+    
     protected static Socket socket;
     
     /**
@@ -92,7 +93,10 @@ public class ECClientCompatTest {
         if (dlQueue == null) throw new Exception("Expecting at least one file in list");
         
         for (ECPartFile p : dlQueue.values()) {
-            System.out.println(p.toString());
+            
+            System.out.println("PartFile Before refresh\n" + p.toString());
+            cl.refreshPartFile(p, ECCodes.EC_DETAIL_FULL);
+            System.out.println("PartFile After refresh\n" + p.toString());
         }
         
         System.out.println("############### GET PARTFILE DETAILS");
@@ -124,7 +128,7 @@ public class ECClientCompatTest {
         System.out.println("############### DELETE");
         cl.changeDownloadStatus(p.getHash(), ECCodes.EC_OP_PARTFILE_DELETE);
         
-        dlQueue = cl.getDownloadQueue();
+        cl.refreshDlQueue(dlQueue);
         p = dlQueue.get("90 1E 6A A2 A6 AC DC 43 A8 3A E3 FC 21 11 20 B0");
         if (p != null) throw new Exception("test file not deleted");
         

@@ -95,6 +95,16 @@ public class ECPacket {
         ECRawPacket raw;
         try {
             raw = parser.getConstructor(InputStream.class).newInstance(in);
+        } catch (InvocationTargetException e) {
+            Throwable cause =  e.getCause();
+            if (cause instanceof IOException) {
+                throw ((IOException) cause);
+            }
+            else if (cause instanceof ECPacketParsingException) {
+                throw ((ECPacketParsingException) cause);
+            } else {
+                throw new ECPacketParsingException("Cannot get a packet parser", null, cause);
+            }
         } catch (Exception e) {
             throw new ECPacketParsingException("Cannot get a packet parser", null, e);
         }

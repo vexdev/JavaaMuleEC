@@ -17,7 +17,6 @@ import com.iukonline.amule.ec.ECTag;
 import com.iukonline.amule.ec.ECTagTypes;
 import com.iukonline.amule.ec.ECUtils;
 import com.iukonline.amule.ec.exceptions.ECPacketParsingException;
-import com.iukonline.amule.ec.v204.ECRawPacketV204;
 
 public class ECRawTest {
 
@@ -57,14 +56,14 @@ public class ECRawTest {
     
     @Test
     public void testTrace() throws IOException, DataFormatException, ECPacketParsingException {
-        File clientFile = new File("test/com/iukonline/amule/ec/test/Login231testClient.bin");
-        File serverFile = new File("test/com/iukonline/amule/ec/test/Login231testServer.bin");
+        File clientFile = new File("test/com/iukonline/amule/ec/test/LongClientRun.bin");
+        File serverFile = new File("test/com/iukonline/amule/ec/test/LongServerRun.bin");
         
         FileInputStream clientStream = new FileInputStream(clientFile);
         FileInputStream serverStream = new FileInputStream(serverFile);
         
-        //while (clientStream.available() > 0) {
-        for (int i = 0; i < 2; i++) {
+        while (clientStream.available() > 0) {
+        //for (int i = 0; i < 5; i++) {
 
             System.out.println("------------- REQUEST ---------------------");
             /*
@@ -76,7 +75,7 @@ public class ECRawTest {
             
             */
             
-            ECPacket p = ECPacket.readFromStream(clientStream, ECRawPacketV204.class);
+            ECPacket p = ECPacket.readFromStream(clientStream, ECRawPacket.class);
             System.out.println(p.getEncodedPacket().dump());
             
 
@@ -86,7 +85,7 @@ public class ECRawTest {
                 /*ECRawPacket resp = new ECRawPacket(serverStream);
                 resp.parse();*/
                 
-                ECPacket p2 = ECPacket.readFromStream(serverStream, ECRawPacketV204.class);
+                ECPacket p2 = ECPacket.readFromStream(serverStream, ECRawPacket.class);
                 System.out.println(p2.getEncodedPacket().dump());
                 
                 // System.out.println(resp.dump());

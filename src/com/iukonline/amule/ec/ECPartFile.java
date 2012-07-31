@@ -170,23 +170,24 @@ public class ECPartFile {
                 if (t != null) ed2kLink = t.getTagValueString();
                 else throw new ECTagParsingException("Missing EC_TAG_PARTFILE_ED2K_LINK in server response");     
 
+                
+                // TODO: These are differenti in 2.2.6 and 2.3.1. We remove them for now
+                
+                
                 //t = pt.getSubTagByName(ECCodes.EC_TAG_PARTFILE_PART_STATUS);
                 //if (t != null) partStatus = t.getTagValueCustom();
                 //else throw new ECTagParsingException("Missing EC_TAG_PARTFILE_PART_STATUS in server response"); 
 
-                t = pt.getSubTagByName(ECCodes.EC_TAG_PARTFILE_GAP_STATUS);
-                if (t != null) gapStatus = t.getTagValueCustom();
-                else throw new ECTagParsingException("Missing EC_TAG_PARTFILE_GAP_STATUS in server response"); 
+                
+                //t = pt.getSubTagByName(ECCodes.EC_TAG_PARTFILE_GAP_STATUS);
+                //if (t != null) gapStatus = t.getTagValueCustom();
+                //else throw new ECTagParsingException("Missing EC_TAG_PARTFILE_GAP_STATUS in server response"); 
                 
                 //t = pt.getSubTagByName(ECCodes.EC_TAG_PARTFILE_REQ_STATUS);
                 //if (t != null) reqStatus = t.getTagValueCustom();
                 //else throw new ECTagParsingException("Missing EC_TAG_PARTFILE_REQ_STATUS in server response"); 
 
 
-                
-                
-                
-                
                 
                 
                 // Optional tags
@@ -219,21 +220,8 @@ public class ECPartFile {
                     }
                 }
 
-                t = pt.getSubTagByName(ECCodes.EC_TAG_PARTFILE_SOURCE_NAMES);
-                if (sourceNames != null) {
-                    sourceNames.clear();
-                } else {
-                    sourceNames = new ArrayList<ECPartFileSourceName>();
-                }
-                if (t != null && t.getSubTags() != null && ! t.getSubTags().isEmpty()) {
-                    Iterator<ECTag> itr = t.getSubTags().iterator();
-                    while(itr.hasNext()) sourceNames.add(new ECPartFileSourceName(itr));
-                }
+                parseSourceNamesList(pt);
 
-                
-                
-                
-                
                 // Normalize content...
                 if (status == PS_EMPTY && sourceCount > 0) status = PS_READY;
                 
@@ -253,6 +241,19 @@ public class ECPartFile {
             throw new ECTagParsingException("One or more unexpected type in EC_PARTFILE tags", e);
         }
         
+    }
+    
+    protected void parseSourceNamesList(ECTag pt) throws ECTagParsingException {
+        ECTag t = pt.getSubTagByName(ECCodes.EC_TAG_PARTFILE_SOURCE_NAMES);
+        if (sourceNames != null) {
+            sourceNames.clear();
+        } else {
+            sourceNames = new ArrayList<ECPartFileSourceName>();
+        }
+        if (t != null && t.getSubTags() != null && ! t.getSubTags().isEmpty()) {
+            Iterator<ECTag> itr = t.getSubTags().iterator();
+            while(itr.hasNext()) sourceNames.add(new ECPartFileSourceName(itr));
+        }
     }
 
     public void copyValuesFromPartFile(ECPartFile p) {
@@ -440,10 +441,10 @@ public class ECPartFile {
 
 
     public class ECPartFileComment {
-        private String author;
-        private String sourceName;
-        private byte rating;
-        private String comment;
+        protected String author;
+        protected String sourceName;
+        protected byte rating;
+        protected String comment;
         
         public ECPartFileComment(Iterator <ECTag> i) throws ECTagParsingException   {
             ECTag t;
@@ -504,8 +505,15 @@ public class ECPartFile {
     }
     
     public class ECPartFileSourceName {
-        private String name;
-        private int count;
+        protected String name;
+        protected int count;
+        
+        public ECPartFileSourceName() { return; }
+        
+        public ECPartFileSourceName(String name, int count) {
+            this.name = name;
+            this.count = count;
+        }
         
         public ECPartFileSourceName(Iterator <ECTag> i) throws ECTagParsingException  {
             ECTag t;
@@ -535,6 +543,11 @@ public class ECPartFile {
         public int getCount() {
             return count;
         }
+        
+        public void setCount(int count) {
+            this.count = count;
+        }
+
 
         @Override
         public String toString() {

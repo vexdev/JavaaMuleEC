@@ -18,7 +18,6 @@ import com.iukonline.amule.ec.exceptions.ECClientException;
 import com.iukonline.amule.ec.exceptions.ECPacketParsingException;
 import com.iukonline.amule.ec.exceptions.ECServerException;
 import com.iukonline.amule.ec.exceptions.ECTagParsingException;
-import com.iukonline.amule.ec.v204.ECCodesV204;
 
 
 
@@ -28,10 +27,6 @@ public class ECClient {
     protected Class <? extends ECRawPacket> packetParser = ECRawPacket.class;
     protected Class <? extends ECPartFile> partFileBuilder = ECPartFile.class;
     
-    private final static boolean FORCE_TRY_LOGIN_BEFORE = true; 
-    // Must be true to ensure compatibiliy with 2.2.2.
-    // 2.2.2 Close TCP socket when receiving unauthenticated request
-
     private byte defaultDetailLevel = ECCodes.EC_DETAIL_FULL;
     
     protected String clientName;
@@ -47,6 +42,8 @@ public class ECClient {
     protected boolean acceptUTF8 = true;
     protected boolean acceptZlib = true;
     
+    public boolean isStateful() { return false; }
+    
     public void setClientName(String clientName) {
         this.clientName = clientName;
     }
@@ -57,6 +54,10 @@ public class ECClient {
     
     public void setHashedPassword(byte[] hashedPassword) {
         this.hashedPassword = hashedPassword;
+    }
+    
+    public void setHashedPassword(String hashedPassword) {
+        setHashedPassword(ECUtils.hexStringToByteArray(hashedPassword));
     }
     
     public void setPassword(String password) throws NoSuchAlgorithmException, UnsupportedEncodingException  {
@@ -79,7 +80,7 @@ public class ECClient {
     
     public ECPacket sendRequestAndWaitResponse(ECPacket epReq, boolean tryLogin) throws IOException, ECPacketParsingException, ECServerException, ECClientException {
 
-        if (FORCE_TRY_LOGIN_BEFORE && tryLogin && !isLoggedIn) login();
+        if (tryLogin && !isLoggedIn) login();
         
         OutputStream os = socket.getOutputStream();
         if (tracer != null) tracer.print("Sending EC packet...\n" + epReq.toString() + "\n\n");
@@ -125,13 +126,13 @@ public class ECClient {
         return sendRequestAndWaitResponse(epReq, true);
     }
     
-    protected ECPacket buildLoginRequest() throws ECClientException {
+    protected ECPacket buildLoginRequest(long protoVersion) throws ECClientException {
         ECPacket epReq = new ECPacket();
         epReq.setOpCode(ECCodes.EC_OP_AUTH_REQ);
         try {
             epReq.addTag(new ECTag(ECCodes.EC_TAG_CLIENT_NAME, clientName));
             epReq.addTag(new ECTag(ECCodes.EC_TAG_CLIENT_VERSION, clientVersion));
-            epReq.addTag(new ECTag(ECCodes.EC_TAG_PROTOCOL_VERSION, ECTagTypes.EC_TAGTYPE_UINT16, (long) ECCodes.EC_CURRENT_PROTOCOL_VERSION));
+            epReq.addTag(new ECTag(ECCodes.EC_TAG_PROTOCOL_VERSION, ECTagTypes.EC_TAGTYPE_UINT16, protoVersion));
             epReq.addTag(new ECTag(ECCodes.EC_TAG_PASSWD_HASH, ECTagTypes.EC_TAGTYPE_HASH16, hashedPassword));
         } catch (DataFormatException e) {
             throw new ECClientException("Cannot create login request", e);
@@ -139,7 +140,19 @@ public class ECClient {
         return epReq;
     }
     
+    
+    protected ECPacket buildLoginRequest() throws ECClientException {
+        return buildLoginRequest(ECCodes.EC_CURRENT_PROTOCOL_VERSION);
+    }
+    
     protected boolean parseLoginResponse(ECPacket epReq, ECPacket epResp) throws ECPacketParsingException, ECServerException, ECClientException, IOException {
+        
+        
+        // TEST:
+        // boolean a = true;
+        // if (a) throw new ECPacketParsingException("TEST EX", epResp.getRawPacket());
+        
+        
         switch (epResp.getOpCode()) {
         case ECCodes.EC_OP_AUTH_OK:
             ECTag versionTag = epResp.getTagByName(ECCodes.EC_TAG_SERVER_VERSION);
@@ -212,33 +225,13 @@ public class ECClient {
             }        
     }
     
-    /*
-    protected ECPartFile getPartFile(byte[] hash, byte detailLevel) throws IOException, ECClientException, ECPacketParsingException, ECServerException {
-        ECPacket partFilePacket = sendGetDloadQueueReq(hash, detailLevel);
-        try {
-            return (partFilePacket.getTags().size() == 0) ? null : partFileBuilder.getConstructor(ECTag.class, Byte.TYPE).newInstance(partFilePacket.getTagByName(ECCodes.EC_TAG_PARTFILE), detailLevel);
-        } catch (InvocationTargetException e) {
-            if (e.getCause() instanceof ECTagParsingException) {
-                throw new ECPacketParsingException("Error parsing partFile packet", partFilePacket.getRawPacket(), e.getCause());
-            } else {
-                throw new ECPacketParsingException("Error creating partFile builder", partFilePacket.getRawPacket(), e);
-            }
-        } catch (Exception e) {
-            throw new ECPacketParsingException("Error creating partFile builder", partFilePacket.getRawPacket(), e);
-        }
-    }
-    
-    protected ECPartFile getPartFile(byte[] hash) throws IOException, ECClientException, ECPacketParsingException, ECServerException {
-        return getPartFile(hash, defaultDetailLevel);
-    }*/
-    
     public void refreshPartFile(ECPartFile p, byte detailLevel) throws IOException, ECClientException, ECPacketParsingException, ECServerException {
         ECPacket partFilePacket = sendGetDloadQueueReq(p, detailLevel);
         if (partFilePacket.getTags().isEmpty()) throw new ECClientException("Part file not found");
         try {
             p.fillFromTag(partFilePacket.getTagByName(ECCodes.EC_TAG_PARTFILE), detailLevel);
         } catch (ECTagParsingException e) {
-            throw new ECPacketParsingException("Error parsing partFile packet", partFilePacket.getRawPacket(), e);
+            throw new ECPacketParsingException("Error parsing partFile packet - " + e.getMessage(), partFilePacket.getRawPacket(), e);
         }
     }
     
@@ -247,6 +240,9 @@ public class ECClient {
     }
     
     public HashMap<String, ECPartFile> getDownloadQueue(byte detailLevel) throws IOException, ECClientException, ECPacketParsingException, ECServerException {
+        
+        // FIXME: this will probably have problems with 2.3.1 with source names, which are always senti in update mode...
+        
         ECPacket partFilePacket = sendGetDloadQueueReq(null, detailLevel);
         
         ArrayList <ECTag> tags = partFilePacket.getTags();
@@ -261,7 +257,7 @@ public class ECClient {
                 p = partFileBuilder.getConstructor(ECTag.class, Byte.TYPE).newInstance(tags.get(i), detailLevel);
             } catch (InvocationTargetException e) {
                 if (e.getCause() instanceof ECTagParsingException) {
-                    throw new ECPacketParsingException("Error parsing partFile packet", partFilePacket.getRawPacket(), e.getCause());
+                    throw new ECPacketParsingException("Error parsing partFile packet - " + e.getCause().getMessage(), partFilePacket.getRawPacket(), e.getCause());
                 } else {
                     throw new ECPacketParsingException("Error creating partFile builder", partFilePacket.getRawPacket(), e);
                 }
@@ -285,7 +281,7 @@ public class ECClient {
         
         if (previousQueue == null) return;
         
-        HashMap<String, ECPartFile> newQueue = getDownloadQueue(defaultDetailLevel);
+        HashMap<String, ECPartFile> newQueue = getDownloadQueue(detailLevel);
         ArrayList <String> hashesToBeRemoved = new ArrayList<String>();
         
         Iterator<ECPartFile> iPrev = previousQueue.values().iterator();
@@ -334,7 +330,7 @@ public class ECClient {
             try {
                 return new ECStats(epResp, detailLevel);
             } catch (ECTagParsingException e) {
-                throw new ECPacketParsingException("Error parsing response to OP_STAT_REQ", epResp.getRawPacket(), e);
+                throw new ECPacketParsingException("Error parsing response to OP_STAT_REQ - " + e.getMessage(), epResp.getRawPacket(), e);
             }
         default:
             throw new ECPacketParsingException("Unexpected response to OP_STAT_REQ", epResp.getRawPacket());

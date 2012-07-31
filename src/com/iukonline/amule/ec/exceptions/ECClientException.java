@@ -33,5 +33,8 @@ public class ECClientException extends Exception {
         this.request = request;
         this.response = response;
     }
+    
+    public ECPacket getRequestPacket() { return request; }
+    public ECPacket getResponsePacket() { return response; }
 
 }

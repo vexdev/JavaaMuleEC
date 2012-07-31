@@ -34,6 +34,29 @@ public class ECTag  {
         subTags = new ArrayList<ECTag>();
     }
     
+    public ECTag(ECTag t) {
+        tagName = t.tagName;
+        tagType = t.tagType;
+        nestingLevel = t.nestingLevel;
+        tagValueString = t.tagValueString;
+        tagValueUInt = t.tagValueUInt;
+        if (t.tagValueIPv4 != null) tagValueIPv4 = new InetSocketAddress(t.tagValueIPv4.getAddress(), t.tagValueIPv4.getPort());
+        if (t.tagValueHash != null) {
+            tagValueHash = new byte[t.tagValueHash.length];
+            System.arraycopy(t.tagValueHash, 0, tagValueHash, 0, t.tagValueHash.length);
+        }
+        if (t.tagValueCustom != null) {
+            tagValueCustom = new byte[t.tagValueCustom.length];
+            System.arraycopy(t.tagValueCustom, 0, tagValueCustom, 0, t.tagValueCustom.length);
+        }
+        if (subTags != null) {
+            for (ECTag sub : subTags) {
+                t.addSubTag(new ECTag(sub));
+            }
+        }
+                        
+    }
+    
 
     public ECTag(short tagName, byte tagType) throws DataFormatException {
         this();
