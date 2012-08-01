@@ -241,8 +241,6 @@ public class ECClient {
     
     public HashMap<String, ECPartFile> getDownloadQueue(byte detailLevel) throws IOException, ECClientException, ECPacketParsingException, ECServerException {
         
-        // FIXME: this will probably have problems with 2.3.1 with source names, which are always senti in update mode...
-        
         ECPacket partFilePacket = sendGetDloadQueueReq(null, detailLevel);
         
         ArrayList <ECTag> tags = partFilePacket.getTags();
@@ -253,7 +251,6 @@ public class ECClient {
         for (int i = 0; i < tags.size(); i++) {
             ECPartFile p;
             try {
-                // p = new ECPartFile(tags.get(i), detailLevel);
                 p = partFileBuilder.getConstructor(ECTag.class, Byte.TYPE).newInstance(tags.get(i), detailLevel);
             } catch (InvocationTargetException e) {
                 if (e.getCause() instanceof ECTagParsingException) {
@@ -351,13 +348,8 @@ public class ECClient {
         }
         
         ECPacket epResp = sendRequestAndWaitResponse(epReq);
-        switch (epResp.getOpCode()) {
-        case ECCodes.EC_OP_NOOP:
-            // TODO Do something?
-            return;
-        default:
-            throw new ECPacketParsingException("Unexpected response to change download status request", epResp.getRawPacket());        
-        }
+        
+        if (epResp.getOpCode() != ECCodes.EC_OP_NOOP) throw new ECPacketParsingException("Unexpected response to change download status request", epResp.getRawPacket());
     }
 
     public void addED2KLink(String url) throws IOException, ECClientException, ECPacketParsingException, ECServerException {
@@ -369,12 +361,7 @@ public class ECClient {
             throw new ECClientException("Invalid URI provided", e);
         }
         ECPacket epResp = sendRequestAndWaitResponse(epReq);
-        switch (epResp.getOpCode()) {
-        case ECCodes.EC_OP_NOOP:
-            return;
-        default:
-            throw new ECPacketParsingException("Unexpected response to add link request", epResp.getRawPacket());        
-        }
+        if (epResp.getOpCode() != ECCodes.EC_OP_NOOP) throw new ECPacketParsingException("Unexpected response to add link request", epResp.getRawPacket());        
     }
 
     
@@ -389,13 +376,7 @@ public class ECClient {
         }
         
         ECPacket epResp = sendRequestAndWaitResponse(epReq);
-        switch (epResp.getOpCode()) {
-        case ECCodes.EC_OP_NOOP:
-            // TODO Do something?
-            return;
-        default:
-            throw new ECPacketParsingException("Unexpected response to rename request", epResp.getRawPacket());        
-        }        
+        if (epResp.getOpCode() != ECCodes.EC_OP_NOOP) throw new ECPacketParsingException("Unexpected response to rename request", epResp.getRawPacket());        
     }
     
     
@@ -412,13 +393,7 @@ public class ECClient {
         }
         
         ECPacket epResp = sendRequestAndWaitResponse(epReq);
-        switch (epResp.getOpCode()) {
-        case ECCodes.EC_OP_NOOP:
-            // TODO Do something?
-            return;
-        default:
-            throw new ECPacketParsingException("Unexpected response to set priority", epResp.getRawPacket());        
-        }
+        if (epResp.getOpCode() != ECCodes.EC_OP_NOOP) throw new ECPacketParsingException("Unexpected response to set priority", epResp.getRawPacket());        
     }
     
 
@@ -469,14 +444,9 @@ public class ECClient {
         epReq.addTag(c.toECTag());
 
         ECPacket epResp = sendRequestAndWaitResponse(epReq);
-        switch (epResp.getOpCode()) {
-        case ECCodes.EC_OP_NOOP:
-            // TODO Do something?
-            return;
-        default:
-            throw new ECPacketParsingException("Unexpected response to create category", epResp.getRawPacket());        
-        }
+        if (epResp.getOpCode() != ECCodes.EC_OP_NOOP) throw new ECPacketParsingException("Unexpected response to create category", epResp.getRawPacket());        
     }
+
     
     public void updateCategory(ECCategory c) throws IOException, ECPacketParsingException, ECServerException, ECClientException {
         ECPacket epReq = new ECPacket();
@@ -484,13 +454,7 @@ public class ECClient {
         epReq.addTag(c.toECTag());
         
         ECPacket epResp = sendRequestAndWaitResponse(epReq);
-        switch (epResp.getOpCode()) {
-        case ECCodes.EC_OP_NOOP:
-            // TODO Do something?
-            return;
-        default:
-            throw new ECPacketParsingException("Unexpected response to update category", epResp.getRawPacket());        
-        }
+        if (epResp.getOpCode() != ECCodes.EC_OP_NOOP) throw new ECPacketParsingException("Unexpected response to update category", epResp.getRawPacket());        
     }
     
     public void deleteCategory(long id) throws IOException, ECPacketParsingException, ECServerException, ECClientException {
@@ -503,13 +467,7 @@ public class ECClient {
         }
       
         ECPacket epResp = sendRequestAndWaitResponse(epReq);
-        switch (epResp.getOpCode()) {
-        case ECCodes.EC_OP_NOOP:
-            // TODO Do something?
-            return;
-        default:
-            throw new ECPacketParsingException("Unexpected response to delete category", epResp.getRawPacket());        
-        }
+        if (epResp.getOpCode() != ECCodes.EC_OP_NOOP) throw new ECPacketParsingException("Unexpected response to delete category", epResp.getRawPacket());        
     }
     
     

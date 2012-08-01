@@ -171,7 +171,7 @@ public class ECPartFile {
                 else throw new ECTagParsingException("Missing EC_TAG_PARTFILE_ED2K_LINK in server response");     
 
                 
-                // TODO: These are differenti in 2.2.6 and 2.3.1. We remove them for now
+                // TODO: These are different in 2.2.6 and 2.3.1. We remove them for now
                 
                 
                 //t = pt.getSubTagByName(ECCodes.EC_TAG_PARTFILE_PART_STATUS);
@@ -567,7 +567,7 @@ public class ECPartFile {
     public static class ECPartFileComparator implements Comparator<ECPartFile> {
         
         public enum ComparatorType {
-            FILENAME, STATUS, TRANSFERED, PROGRESS
+            STATUS, TRANSFERED, PROGRESS, SIZE, SPEED, PRIORITY, REMAINING, LAST_SEEN_COMPLETE, FILENAME
         }
         
         private ComparatorType compType;
@@ -578,21 +578,110 @@ public class ECPartFile {
             this.compType = compType;
         }
 
+        public ComparatorType getCompType() {
+            return compType;
+        }
+
+        public void setCompType(ComparatorType compType) {
+            this.compType = compType;
+        }
+
         @Override
         public int compare(ECPartFile object1, ECPartFile object2) {
             switch (compType) {
             case STATUS:
-                return object1.getStatus() - object2.getStatus();
+                return sortByStatus(object1, object2);
             case TRANSFERED:
-                return (int)(object1.getSizeDone() - object2.getSizeDone());
+                return (object1.getSizeDone() > object2.getSizeDone() ? 1 : object1.getSizeDone() == object2.getSizeDone() ? sortByFileName(object1, object2) : -1);
+            case SIZE:
+                return (object1.getSizeFull() > object2.getSizeFull() ? 1 : object1.getSizeFull() == object2.getSizeFull() ? sortByFileName(object1, object2) : -1);
             case PROGRESS:
                 float p1 = ((float) object1.getSizeDone()) * 100f / ((float) object1.getSizeFull());
                 float p2 = ((float) object2.getSizeDone()) * 100f / ((float) object2.getSizeFull());
-                return p2 > p1 ? 1 : (p2 < p1 ? -1 : 0);
+                return p1 > p2 ? 1 : (p1 < p2 ? -1 : sortByFileName(object1, object2));
+            case SPEED:
+                return sortBySpeed(object1, object2);
+            case REMAINING:
+                return sortByRemaining(object1, object2);
+            case LAST_SEEN_COMPLETE:
+                return object1.getLastSeenComp().compareTo(object2.getLastSeenComp());
             case FILENAME:
             default:
-                return object1.getFileName().compareToIgnoreCase(object2.getFileName());
+                return sortByFileName(object1, object2);
             }
+        }
+        
+        protected int sortByRemaining(ECPartFile object1, ECPartFile object2) {
+            
+            if (object1.getSpeed() == 0) {
+                if (object2.getSpeed() == 0) {
+                    return sortByFileName(object1, object2);
+                } else {
+                    return -1;
+                }
+            }
+            
+            if (object2.getSpeed() == 0) return 1;
+            
+            
+            long r1 = (object1.getSizeFull() - object1.getSizeDone()) / object1.getSpeed() ;
+            long r2 = (object2.getSizeFull() - object2.getSizeDone()) / object2.getSpeed() ;;
+            return r1 > r2 ? 1 : (r1 < r2 ? -1 : 0);
+        }
+        
+        protected int sortByFileName(ECPartFile object1, ECPartFile object2) {
+            return object1.getFileName().compareToIgnoreCase(object2.getFileName());
+        }
+        
+        protected int sortBySpeed(ECPartFile object1, ECPartFile object2) {
+            return (object1.getSpeed() > object2.getSpeed()) ? 1 : (object1.getSpeed() == object2.getSpeed() ? sortByFileName(object1, object2) : 1);
+        }
+
+        protected int encodStatusOrder(byte status) {
+            switch(status) {
+            case PS_UNKNOWN: return 2;
+            case PS_ERROR: return 3;
+            case PS_PAUSED: return 4;
+            case PS_WAITINGFORHASH: return 5;
+            case PS_HASHING: return 6;
+            case PS_EMPTY: return 7;
+            case PS_INSUFFICIENT: return 8;
+            case PS_READY: return 9;
+            case PS_COMPLETING: return 10;
+            case PS_COMPLETE: return 11;
+            case PS_ALLOCATING: return 12;
+            default: return 1;
+            }
+        }
+        
+        protected int encodePriorityOrder(byte prio) {
+            switch (prio) {
+            case PR_AUTO_LOW: return 2;
+            case PR_LOW: return 3;
+            case PR_AUTO_NORMAL: return 4;
+            case PR_NORMAL: return 5;
+            case PR_AUTO_HIGH: return 6;
+            case PR_HIGH: return 7;
+            default: return 1;
+            }
+        }
+
+        protected int sortByPriority (ECPartFile object1, ECPartFile object2) {
+            int p1 = encodePriorityOrder(object1.getPrio());
+            int p2 = encodePriorityOrder(object1.getPrio());
+            
+            if (p1 != p2) return p1 - p2;
+            return sortByFileName(object1, object2);
+        }
+
+        
+        protected int sortByStatus (ECPartFile object1, ECPartFile object2) {
+            int s1 = encodStatusOrder(object1.getStatus());
+            int s2 = encodStatusOrder(object1.getStatus());
+            
+            if (s1 != s2) return s1 - s2;
+            if (s1 == ECPartFile.PS_READY) return sortBySpeed(object1, object2);
+            return sortByFileName(object1, object2);
         }
     }
 

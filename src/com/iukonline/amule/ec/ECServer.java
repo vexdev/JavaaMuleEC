@@ -33,6 +33,7 @@ public class ECServer {
             case ECCodes.EC_DETAIL_FULL:
                 
                 // TODO NOT ALWAYS PRESENT IN 2.3.1... WHY?
+                // Answer: server are probabily sent in update mode... check...
                 /*
                 t = t1.getSubTagByName(ECCodes.EC_TAG_SERVER_PING);
                 if (t != null) serverPing = t.getTagValueUInt();

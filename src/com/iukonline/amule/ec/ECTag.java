@@ -97,7 +97,7 @@ public class ECTag  {
             setTagValueCustom(tagValue);
             break;
         default:
-            // TODO Raise Exception
+            throw new DataFormatException("Tag type is neither HASH16 nor CUSTOM");
             
         }
     }
@@ -347,7 +347,6 @@ public class ECTag  {
                 while(itr.hasNext()) {
                     // TODO: VERIFY. It seems that packet len is computed as not comrpessed for subtags
                      len += itr.next().getLength(true, isUTF8Compressed);
-                    //len += itr.next().getLength(true, false);
                 }
 
             
