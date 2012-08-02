@@ -32,7 +32,7 @@ public class ECServer {
             switch (detailLevel) {
             case ECCodes.EC_DETAIL_FULL:
                 
-                // TODO NOT ALWAYS PRESENT IN 2.3.1... WHY?
+                // TBV NOT ALWAYS PRESENT IN 2.3.1... WHY?
                 // Answer: server are probabily sent in update mode... check...
                 /*
                 t = t1.getSubTagByName(ECCodes.EC_TAG_SERVER_PING);

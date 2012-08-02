@@ -317,7 +317,11 @@ public class ECTag  {
             }
             break;
         case ECTagTypes.EC_TAGTYPE_DOUBLE:
-            // TODO Implement this. Today won't happen as DOUBLE trhows execption in set method
+            try {
+                len += Double.toString(tagValueDouble).getBytes("UTF-8").length + 1;
+            } catch (UnsupportedEncodingException e) {
+                throw new ECTagParsingException("Severe error: UTF-8 not supported for string encoding", e);
+            }
             break;
         case ECTagTypes.EC_TAGTYPE_IPV4:
             len += 4; 
@@ -345,7 +349,7 @@ public class ECTag  {
         
                 Iterator<ECTag> itr = subTags.iterator();
                 while(itr.hasNext()) {
-                    // TODO: VERIFY. It seems that packet len is computed as not comrpessed for subtags
+                    // TBV It seems that packet len is computed as not comrpessed for subtags
                      len += itr.next().getLength(true, isUTF8Compressed);
                 }
 
@@ -406,9 +410,8 @@ public class ECTag  {
             value = tagValueString;
             break;
         case ECTagTypes.EC_TAGTYPE_DOUBLE:
-            // TODO
             type = "DOUBLE";
-            value = "DONT KNOW HOW TO DECODE";
+            value = Double.toString(tagValueDouble);
             break;
         case ECTagTypes.EC_TAGTYPE_IPV4:
             type = "IPV4";

@@ -155,7 +155,7 @@ public class ECPartFile {
                 else throw new ECTagParsingException("Missing EC_TAG_PARTFILE_CAT in server response");
                 
                 t = pt.getSubTagByName(ECCodes.EC_TAG_PARTFILE_LAST_SEEN_COMP);
-                if (t != null) lastSeenComp = new Date((int) t.getTagValueUInt());
+                if (t != null) lastSeenComp = new Date(t.getTagValueUInt() * 1000L); // LAST_SEEN_COMP is time_t in cpp (seconds), while Java uses milliseconds
                 else throw new ECTagParsingException("Missing EC_TAG_PARTFILE_LAST_SEEN_COMP in server response");
                 
                 t = pt.getSubTagByName(ECCodes.EC_TAG_PARTFILE_NAME);
@@ -192,7 +192,7 @@ public class ECPartFile {
                 
                 // Optional tags
                 
-                // TODO: What should we do when refreshing if these are not present? Erase them or leave them?  
+                // TBV What should we do when refreshing if these are not present? Erase them or leave them?  
                 
                 t = pt.getSubTagByName(ECCodes.EC_TAG_PARTFILE_LAST_RECV);
                 if (t != null) lastRecv = new Date((int) t.getTagValueUInt());

@@ -244,7 +244,6 @@ public class ECClient {
         ECPacket partFilePacket = sendGetDloadQueueReq(null, detailLevel);
         
         ArrayList <ECTag> tags = partFilePacket.getTags();
-        if (tags.isEmpty()) return null;
         
         HashMap<String, ECPartFile> dlQueue = new HashMap<String, ECPartFile>(tags.size());
         
@@ -430,10 +429,8 @@ public class ECClient {
                 }
             }
             return categoryList;
-            
         default:
             throw new ECPacketParsingException("Unexpected response to get categories", epResp.getRawPacket());        
-            
         }
     }
     

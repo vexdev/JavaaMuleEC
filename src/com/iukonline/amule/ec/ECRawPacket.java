@@ -770,7 +770,7 @@ public class ECRawPacket {
                 
                 throw new ECPacketParsingException("Severe error: UTF-8 encoding not supported for strings", ECRawPacket.this, e);
             } catch (UnknownHostException e) {
-                // TODO: TBV if InetAddress + InetSocketAddress is the best class to be used, as they can throw 
+                // TBV if InetAddress + InetSocketAddress is the best class to be used, as they can throw 
                 // this exception
                 throw new ECPacketParsingException("Unknown host in IPV4 tag value", ECRawPacket.this, e);
             }
