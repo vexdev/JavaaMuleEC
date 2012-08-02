@@ -4,6 +4,9 @@
 package com.iukonline.amule.ec.test;
 
 import java.net.Socket;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 
 import org.junit.After;
@@ -24,17 +27,19 @@ import com.iukonline.amule.ec.v204.ECClientV204;
  */
 public class ECClientCompatTest {
 
-    /*
+    
     protected static String SERVER_HOST = "***REMOVED***";
     protected static int SERVER_PORT = 4712;
     protected static String SERVER_PASSWORD = "***REMOVED***";    
     protected static ECClient cl = new ECClient();
-    */
     
+    
+    /*
     protected static String SERVER_HOST = "192.168.56.101";
     protected static int SERVER_PORT = 4712;
     protected static String SERVER_PASSWORD = "test";    
     protected static ECClient cl = new ECClientV204();
+    */
     //protected static ECClient cl = new ECClientFake();
     
     protected static Socket socket;
@@ -98,6 +103,36 @@ public class ECClientCompatTest {
             cl.refreshPartFile(p, ECCodes.EC_DETAIL_FULL);
             System.out.println("PartFile After refresh\n" + p.toString());
         }
+        
+        System.out.println("############### PARTFILE COMPARATOR - SORT BY STATUS");
+        ArrayList <ECPartFile> sorted = new ArrayList <ECPartFile>(dlQueue.values());
+        Collections.sort(sorted, new ECPartFile.ECPartFileComparator(ECPartFile.ECPartFileComparator.ComparatorType.STATUS));
+        for (ECPartFile p : sorted) {
+            System.out.printf("Status: %d - Speed: %d - %s\n", p.getStatus(), p.getSpeed(), p.toString());
+        }
+        
+        System.out.println("############### PARTFILE COMPARATOR - SORT BY SPEED");
+        sorted = new ArrayList <ECPartFile>(dlQueue.values());
+        Collections.sort(sorted, new ECPartFile.ECPartFileComparator(ECPartFile.ECPartFileComparator.ComparatorType.SPEED));
+        for (ECPartFile p : sorted) {
+            System.out.printf("Speed: %d - %s\n", p.getSpeed(), p.toString());
+        }
+        
+        System.out.println("############### PARTFILE COMPARATOR - SORT BY PRIO");
+        sorted = new ArrayList <ECPartFile>(dlQueue.values());
+        Collections.sort(sorted, new ECPartFile.ECPartFileComparator(ECPartFile.ECPartFileComparator.ComparatorType.PRIORITY));
+        for (ECPartFile p : sorted) {
+            System.out.printf("Priority: %d - %s\n", p.getPrio(), p.toString());
+        }
+        
+        System.out.println("############### PARTFILE COMPARATOR - SORT BY REMAINING");
+        sorted = new ArrayList <ECPartFile>(dlQueue.values());
+        Collections.sort(sorted, new ECPartFile.ECPartFileComparator(ECPartFile.ECPartFileComparator.ComparatorType.REMAINING));
+        for (ECPartFile p : sorted) {
+            System.out.printf("Remaining: %d - %s\n", p.getSpeed() == 0 ? null : ((p.getSizeFull() - p.getSizeDone())/ p.getSpeed()), p.toString());
+        }
+        
+        
         
         System.out.println("############### GET PARTFILE DETAILS");
         ECPartFile p = dlQueue.get("90 1E 6A A2 A6 AC DC 43 A8 3A E3 FC 21 11 20 B0");

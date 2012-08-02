@@ -566,12 +566,13 @@ public class ECPartFile {
     
     public static class ECPartFileComparator implements Comparator<ECPartFile> {
         
+        // TODO Implement reverse y/n and let application decide
+        
         public enum ComparatorType {
             STATUS, TRANSFERED, PROGRESS, SIZE, SPEED, PRIORITY, REMAINING, LAST_SEEN_COMPLETE, FILENAME
         }
         
         private ComparatorType compType;
-        
 
         
         public ECPartFileComparator(ComparatorType compType) {
@@ -592,19 +593,21 @@ public class ECPartFile {
             case STATUS:
                 return sortByStatus(object1, object2);
             case TRANSFERED:
-                return (object1.getSizeDone() > object2.getSizeDone() ? 1 : object1.getSizeDone() == object2.getSizeDone() ? sortByFileName(object1, object2) : -1);
+                return (object2.getSizeDone() > object1.getSizeDone() ? 1 : object1.getSizeDone() == object2.getSizeDone() ? sortByFileName(object1, object2) : -1);
             case SIZE:
-                return (object1.getSizeFull() > object2.getSizeFull() ? 1 : object1.getSizeFull() == object2.getSizeFull() ? sortByFileName(object1, object2) : -1);
+                return (object2.getSizeFull() > object1.getSizeFull() ? 1 : object1.getSizeFull() == object2.getSizeFull() ? sortByFileName(object1, object2) : -1);
             case PROGRESS:
                 float p1 = ((float) object1.getSizeDone()) * 100f / ((float) object1.getSizeFull());
                 float p2 = ((float) object2.getSizeDone()) * 100f / ((float) object2.getSizeFull());
-                return p1 > p2 ? 1 : (p1 < p2 ? -1 : sortByFileName(object1, object2));
+                return p2 > p1 ? 1 : (p2 < p1 ? -1 : sortByFileName(object1, object2));
             case SPEED:
                 return sortBySpeed(object1, object2);
+            case PRIORITY:
+                return sortByPriority(object1, object2);
             case REMAINING:
                 return sortByRemaining(object1, object2);
             case LAST_SEEN_COMPLETE:
-                return object1.getLastSeenComp().compareTo(object2.getLastSeenComp());
+                return object2.getLastSeenComp().compareTo(object1.getLastSeenComp());
             case FILENAME:
             default:
                 return sortByFileName(object1, object2);
@@ -617,11 +620,11 @@ public class ECPartFile {
                 if (object2.getSpeed() == 0) {
                     return sortByFileName(object1, object2);
                 } else {
-                    return -1;
+                    return 1;
                 }
             }
             
-            if (object2.getSpeed() == 0) return 1;
+            if (object2.getSpeed() == 0) return -1;
             
             
             long r1 = (object1.getSizeFull() - object1.getSizeDone()) / object1.getSpeed() ;
@@ -634,7 +637,7 @@ public class ECPartFile {
         }
         
         protected int sortBySpeed(ECPartFile object1, ECPartFile object2) {
-            return (object1.getSpeed() > object2.getSpeed()) ? 1 : (object1.getSpeed() == object2.getSpeed() ? sortByFileName(object1, object2) : 1);
+            return (object2.getSpeed() > object1.getSpeed()) ? 1 : (object1.getSpeed() == object2.getSpeed() ? sortByFileName(object1, object2) : -1);
         }
 
         protected int encodStatusOrder(byte status) {
@@ -668,19 +671,19 @@ public class ECPartFile {
 
         protected int sortByPriority (ECPartFile object1, ECPartFile object2) {
             int p1 = encodePriorityOrder(object1.getPrio());
-            int p2 = encodePriorityOrder(object1.getPrio());
+            int p2 = encodePriorityOrder(object2.getPrio());
             
-            if (p1 != p2) return p1 - p2;
+            if (p1 != p2) return p2 - p1;
             return sortByFileName(object1, object2);
         }
 
         
         protected int sortByStatus (ECPartFile object1, ECPartFile object2) {
             int s1 = encodStatusOrder(object1.getStatus());
-            int s2 = encodStatusOrder(object1.getStatus());
+            int s2 = encodStatusOrder(object2.getStatus());
             
-            if (s1 != s2) return s1 - s2;
-            if (s1 == ECPartFile.PS_READY) return sortBySpeed(object1, object2);
+            if (s1 != s2) return s2 - s1;
+            if (object1.getStatus() == ECPartFile.PS_READY) return sortBySpeed(object1, object2);
             return sortByFileName(object1, object2);
         }
     }
