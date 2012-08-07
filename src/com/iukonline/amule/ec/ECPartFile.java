@@ -223,11 +223,13 @@ public class ECPartFile {
                 parseSourceNamesList(pt);
 
                 // Normalize content...
-                if (status == PS_EMPTY && sourceCount > 0) status = PS_READY;
+                if (status == PS_EMPTY && sourceCount > 0) {
+                    status = PS_READY;
+                } else if (status == PS_COMPLETING || status == PS_COMPLETE) {
+                    sizeDone = sizeFull; 
+                }
                 
                 // Continue to next case...
-                
-
                 
                 
                 break;
