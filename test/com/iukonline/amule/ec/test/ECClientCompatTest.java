@@ -5,7 +5,6 @@ package com.iukonline.amule.ec.test;
 
 import java.net.Socket;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 
@@ -19,7 +18,6 @@ import com.iukonline.amule.ec.ECCategory;
 import com.iukonline.amule.ec.ECClient;
 import com.iukonline.amule.ec.ECCodes;
 import com.iukonline.amule.ec.ECPartFile;
-import com.iukonline.amule.ec.v204.ECClientV204;
 
 /**
  * @author ***REMOVED***
