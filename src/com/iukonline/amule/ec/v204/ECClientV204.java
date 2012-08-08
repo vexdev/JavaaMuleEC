@@ -108,6 +108,17 @@ public class ECClientV204 extends ECClient {
 
             ECPacket epFinalResp = sendRequestAndWaitResponse(epPassword, false);
             return super.parseLoginResponse(epPassword, epFinalResp);
+        case ECCodes.EC_OP_AUTH_FAIL:
+            String errMsg = "No error returned.";
+            ECTag tagError = epResp.getTagByName((short) ECCodesV204.EC_TAG_STRING);
+            if (tagError != null) {
+                try {
+                    errMsg = tagError.getTagValueString();
+                } catch (DataFormatException e) {
+                    throw new ECPacketParsingException("Cannot read returned error message", epResp.getRawPacket(), e);
+                }
+            }
+            throw new ECServerException("Login failed - " + errMsg, epReq, epResp);
             
         default:
             throw new ECPacketParsingException("Unexpected response to login request", epResp.getRawPacket());
