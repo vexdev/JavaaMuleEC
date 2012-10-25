@@ -216,6 +216,72 @@ public class ECClientV204 extends ECClient {
         
     }
 
+    protected String searchStart(String searchString, String typeText, String extension, long minSize, long maxSize, long availability, byte searchType) throws ECClientException, IOException, ECPacketParsingException, ECServerException {
+        ECTag t;
+        try {
+            t = new ECTag(ECCodesV204.EC_TAG_SEARCH_TYPE, searchType);
+            t.addSubTag(new ECTag(ECCodesV204.EC_TAG_SEARCH_NAME, searchString));
+            if (typeText != null && typeText.length() > 0) t.addSubTag(new ECTag(ECCodesV204.EC_TAG_SEARCH_FILE_TYPE, typeText));
+            if (extension != null && extension.length() > 0) t.addSubTag(new ECTag(ECCodesV204.EC_TAG_SEARCH_EXTENSION, extension));
+            if (minSize >= 0) t.addSubTag(new ECTag(ECCodesV204.EC_TAG_SEARCH_MIN_SIZE, ECTagTypes.EC_TAGTYPE_UINT64, minSize));
+            if (maxSize >= 0) t.addSubTag(new ECTag(ECCodesV204.EC_TAG_SEARCH_MAX_SIZE, ECTagTypes.EC_TAGTYPE_UINT64, maxSize));
+            if (availability > 0) t.addSubTag(new ECTag(ECCodesV204.EC_TAG_SEARCH_AVAILABILITY, ECTagTypes.EC_TAGTYPE_UINT64, availability));
+        } catch (DataFormatException e) {
+            throw new ECClientException("Cannot create search start request", e);
+        }
+        
+        ECPacket epReq = new ECPacket();
+        epReq.setOpCode(ECCodesV204.EC_OP_SEARCH_START);
+        epReq.addTag(t);
+        
+        ECPacket epResp = sendRequestAndWaitResponse(epReq);
+        
+        switch (epResp.getOpCode()) {
+        case ECCodesV204.EC_OP_STRINGS:
+            try {
+                ECTag s = epResp.getTagByName(ECCodesV204.EC_TAG_STRING);
+                if (s == null) throw new ECPacketParsingException("Expected string not found in search start response", epResp.getRawPacket()); 
+                return s.getTagValueString();
+            } catch (DataFormatException e) {
+                throw new ECPacketParsingException("Unexpected format for search start response", epResp.getRawPacket(), e);
+            }
+        default:
+            throw new ECPacketParsingException("Unexpected response to start search", epResp.getRawPacket());
+        }
+    }
+
+    protected void searchStop() throws IOException, ECPacketParsingException, ECServerException, ECClientException  {
+        ECPacket epReq = new ECPacket();
+        epReq.setOpCode(ECCodesV204.EC_OP_SEARCH_STOP);
+        
+        ECPacket epResp = sendRequestAndWaitResponse(epReq);
+        
+        if (epResp.getOpCode() != ECCodesV204.EC_OP_MISC_DATA) throw new ECPacketParsingException("Unexpected response to sttop search", epResp.getRawPacket());
+    }
     
+    protected byte searchProgress() throws ECPacketParsingException, IOException, ECServerException, ECClientException {
+        ECPacket epReq = new ECPacket();
+        epReq.setOpCode(ECCodesV204.EC_OP_SEARCH_PROGRESS);
+        
+        ECPacket epResp = sendRequestAndWaitResponse(epReq);
+        
+        switch (epResp.getOpCode()) {
+        case ECCodesV204.EC_OP_SEARCH_PROGRESS:
+            try {
+                ECTag s = epResp.getTagByName(ECCodesV204.EC_TAG_SEARCH_STATUS);
+                if (s == null) throw new ECPacketParsingException("Expected tag EC_TAG_SEARCH_STATUS not found in search progress response", epResp.getRawPacket());
+                long status = s.getTagValueUInt();
+                
+                if (status >= 0 && status <= 100) return ((byte) status);
+                else if (status == 0xffff) return 100;
+                else throw new ECPacketParsingException("Unexpected status value returned ", epResp.getRawPacket());
+
+            } catch (DataFormatException e) {
+                throw new ECPacketParsingException("Unexpected format for search start response", epResp.getRawPacket(), e);
+            }
+        default:
+            throw new ECPacketParsingException("Unexpected response to start progress", epResp.getRawPacket());
+        }
+    }
     
 }
