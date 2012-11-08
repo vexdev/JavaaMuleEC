@@ -129,8 +129,8 @@ public class ECPacket {
         
         StringBuilder out = new StringBuilder();
         Formatter f = new Formatter(out);
-        
-        f.format("isUTF8Compressed: %s, isZlibCompressed: %s, hasId: %s, acceptsUTF8: %s, acceptsZlib: %s\n", isUTF8Compressed, isZlibCompressed, hasId, acceptsUTF8, acceptsZlib); 
+        f.format("isUTF8Compressed: %s, isZlibCompressed: %s, hasId: %s, acceptsUTF8: %s, acceptsZlib: %s\n", isUTF8Compressed, isZlibCompressed, hasId, acceptsUTF8, acceptsZlib);
+        f.close();
         out.append("OP Code: <" + Integer.toHexString(opCode) + ">\n");
         
         if (! tags.isEmpty()) {           

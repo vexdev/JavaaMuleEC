@@ -470,6 +470,23 @@ public class ECClient {
     
     
     
+    public String searchStart(String searchString, String typeText, String extension, long minSize, long maxSize, long availability, byte searchType) throws ECClientException, IOException, ECPacketParsingException, ECServerException {
+        throw new ECClientException("Search not implemented yet for this server version");
+    }
+
+    public void searchStop() throws IOException, ECPacketParsingException, ECServerException, ECClientException  {
+        throw new ECClientException("Search not implemented yet for this server version");
+    }
+    
+    public byte searchProgress() throws ECPacketParsingException, IOException, ECServerException, ECClientException {
+        throw new ECClientException("Search not implemented tey for this server version");
+    }
+    
+    public ECSearchResults searchGetReults(ECSearchResults results) throws IOException, ECPacketParsingException, ECServerException, ECClientException {
+        throw new ECClientException("Search not implemented yet for this server version");
+
+    }
+    
     
     
     

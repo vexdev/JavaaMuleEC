@@ -18,6 +18,7 @@ import com.iukonline.amule.ec.ECCategory;
 import com.iukonline.amule.ec.ECClient;
 import com.iukonline.amule.ec.ECCodes;
 import com.iukonline.amule.ec.ECPartFile;
+import com.iukonline.amule.ec.v204.ECClientV204;
 
 /**
  * @author ***REMOVED***
@@ -29,7 +30,7 @@ public class ECClientCompatTest {
     protected static String SERVER_HOST = "***REMOVED***";
     protected static int SERVER_PORT = 4712;
     protected static String SERVER_PASSWORD = "***REMOVED***";    
-    protected static ECClient cl = new ECClient();
+    protected static ECClient cl = new ECClientV204();
     
     
     /*

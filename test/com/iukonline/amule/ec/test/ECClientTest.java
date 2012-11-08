@@ -16,11 +16,12 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.iukonline.amule.ec.ECCategory;
-import com.iukonline.amule.ec.ECClient;
 import com.iukonline.amule.ec.ECCodes;
 import com.iukonline.amule.ec.ECPartFile;
+import com.iukonline.amule.ec.ECSearchResults;
 import com.iukonline.amule.ec.ECStats;
 import com.iukonline.amule.ec.v204.ECClientV204;
+import com.iukonline.amule.ec.v204.ECCodesV204;
 
 /**
  * @author ***REMOVED***
@@ -29,13 +30,13 @@ import com.iukonline.amule.ec.v204.ECClientV204;
 public class ECClientTest {
 
     
-    // final static String SERVER_HOST = "***REMOVED***";
-    final static String SERVER_HOST = "192.168.56.101";
+    final static String SERVER_HOST = "***REMOVED***";
+    //final static String SERVER_HOST = "192.168.56.101";
     final static int SERVER_PORT = 4712;
-    // final static String SERVER_PASSWORD = "***REMOVED***";
-    final static String SERVER_PASSWORD = "test";
+    final static String SERVER_PASSWORD = "***REMOVED***";
+    // final static String SERVER_PASSWORD = "test";
     
-    static ECClient cl;
+    static ECClientV204 cl;
     static Socket socket;
     
     /**
@@ -61,6 +62,8 @@ public class ECClientTest {
         
         //cl.enableUTF8Compression();
     }
+    
+    
 
     /**
      * @throws java.lang.Exception
@@ -83,6 +86,29 @@ public class ECClientTest {
     public void tearDown() throws Exception {
     }
 
+    @Test
+    public void testSearch() throws Exception {
+        System.out.println("Running searchStart...");
+        String resString = cl.searchStart("matrix", null, null, -1, -1, 0, ECCodesV204.EC_SEARCH_KAD);
+        System.out.println("Got search response " + resString);
+        
+        ECSearchResults res = null;
+        
+        byte progress = 0;
+        while (progress < 100) {
+            System.out.println("querying searchProgress...");
+            progress = cl.searchProgress();
+            System.out.println("got " + progress);
+            res = cl.searchGetReults(res);
+            
+            System.out.println("Result \n" + res.toString());
+            
+            Thread.sleep(5000);
+        }
+        
+        System.out.println("Search finished");
+    }
+    
     @Test
     public void fetchDlQueue() throws Exception {
         

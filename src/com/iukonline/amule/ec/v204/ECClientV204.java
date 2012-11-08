@@ -12,6 +12,7 @@ import com.iukonline.amule.ec.ECClient;
 import com.iukonline.amule.ec.ECCodes;
 import com.iukonline.amule.ec.ECPacket;
 import com.iukonline.amule.ec.ECPartFile;
+import com.iukonline.amule.ec.ECSearchResults;
 import com.iukonline.amule.ec.ECTag;
 import com.iukonline.amule.ec.ECTagTypes;
 import com.iukonline.amule.ec.ECUtils;
@@ -216,10 +217,11 @@ public class ECClientV204 extends ECClient {
         
     }
 
-    protected String searchStart(String searchString, String typeText, String extension, long minSize, long maxSize, long availability, byte searchType) throws ECClientException, IOException, ECPacketParsingException, ECServerException {
+    @Override
+    public String searchStart(String searchString, String typeText, String extension, long minSize, long maxSize, long availability, byte searchType) throws ECClientException, IOException, ECPacketParsingException, ECServerException {
         ECTag t;
         try {
-            t = new ECTag(ECCodesV204.EC_TAG_SEARCH_TYPE, searchType);
+            t = new ECTag(ECCodesV204.EC_TAG_SEARCH_TYPE, ECTagTypes.EC_TAGTYPE_UINT8, searchType);
             t.addSubTag(new ECTag(ECCodesV204.EC_TAG_SEARCH_NAME, searchString));
             if (typeText != null && typeText.length() > 0) t.addSubTag(new ECTag(ECCodesV204.EC_TAG_SEARCH_FILE_TYPE, typeText));
             if (extension != null && extension.length() > 0) t.addSubTag(new ECTag(ECCodesV204.EC_TAG_SEARCH_EXTENSION, extension));
@@ -250,7 +252,8 @@ public class ECClientV204 extends ECClient {
         }
     }
 
-    protected void searchStop() throws IOException, ECPacketParsingException, ECServerException, ECClientException  {
+    @Override
+    public void searchStop() throws IOException, ECPacketParsingException, ECServerException, ECClientException  {
         ECPacket epReq = new ECPacket();
         epReq.setOpCode(ECCodesV204.EC_OP_SEARCH_STOP);
         
@@ -259,7 +262,8 @@ public class ECClientV204 extends ECClient {
         if (epResp.getOpCode() != ECCodesV204.EC_OP_MISC_DATA) throw new ECPacketParsingException("Unexpected response to sttop search", epResp.getRawPacket());
     }
     
-    protected byte searchProgress() throws ECPacketParsingException, IOException, ECServerException, ECClientException {
+    @Override
+    public byte searchProgress() throws ECPacketParsingException, IOException, ECServerException, ECClientException {
         ECPacket epReq = new ECPacket();
         epReq.setOpCode(ECCodesV204.EC_OP_SEARCH_PROGRESS);
         
@@ -273,14 +277,45 @@ public class ECClientV204 extends ECClient {
                 long status = s.getTagValueUInt();
                 
                 if (status >= 0 && status <= 100) return ((byte) status);
-                else if (status == 0xffff) return 100;
+                else if (status == 0xffff || status == 0xfffe) return 100;
                 else throw new ECPacketParsingException("Unexpected status value returned ", epResp.getRawPacket());
 
             } catch (DataFormatException e) {
                 throw new ECPacketParsingException("Unexpected format for search start response", epResp.getRawPacket(), e);
             }
         default:
-            throw new ECPacketParsingException("Unexpected response to start progress", epResp.getRawPacket());
+            throw new ECPacketParsingException("Unexpected response to search progress", epResp.getRawPacket());
+        }
+    }
+    
+    @Override
+    public ECSearchResults searchGetReults(ECSearchResults results) throws IOException, ECPacketParsingException, ECServerException, ECClientException {
+        ECPacket epReq = new ECPacket();
+        epReq.setOpCode(ECCodesV204.EC_OP_SEARCH_RESULTS);
+        try {
+            epReq.addTag(new ECTag(ECCodesV204.EC_TAG_DETAIL_LEVEL, ECTagTypes.EC_TAGTYPE_UINT8, ECCodesV204.EC_DETAIL_INC_UPDATE));
+        } catch (DataFormatException e) {
+            throw new ECClientException("Cannot create search results request", e);
+        }
+        
+        ECPacket epResp = sendRequestAndWaitResponse(epReq);
+        
+        switch (epResp.getOpCode()) {
+        case ECCodesV204.EC_OP_SEARCH_RESULTS:
+            ArrayList <ECTag> resTags = epResp.getTags();
+            if (resTags == null || resTags.isEmpty()) return new ECSearchResultsV204(ECCodesV204.EC_DETAIL_INC_UPDATE);
+            try {
+                if (results == null) {
+                    return new ECSearchResultsV204(resTags);
+                } else {
+                    results.updateSearchResults(resTags);
+                    return results;
+                }
+            } catch (ECTagParsingException e) {
+                throw new ECPacketParsingException("Error parsing search result response - " + e.getMessage(), epResp.getRawPacket(), e);
+            }
+        default:
+            throw new ECPacketParsingException("Unexpected response to search results", epResp.getRawPacket());
         }
     }
     
