@@ -487,6 +487,23 @@ public class ECClient {
 
     }
     
+    public void searchStartResult(ECSearchFile f) throws IOException, ECPacketParsingException, ECServerException, ECClientException {
+        
+        ECPacket epReq = new ECPacket();
+        epReq.setOpCode(ECCodes.EC_OP_DOWNLOAD_SEARCH_RESULT);
+        try {
+            epReq.addTag(new ECTag(ECCodes.EC_TAG_PARTFILE, ECTagTypes.EC_TAGTYPE_HASH16, f.getHash()));
+        } catch (DataFormatException e) {
+            throw new ECClientException("Cannot create start download search result request", e);
+        }
+        
+        ECPacket epResp = sendRequestAndWaitResponse(epReq);
+
+        if (epResp.getOpCode() != ECCodes.EC_OP_STRINGS) {
+            throw new ECPacketParsingException("Unexpected response to start download search result", epResp.getRawPacket());    
+        }
+    }
+    
     
     
     

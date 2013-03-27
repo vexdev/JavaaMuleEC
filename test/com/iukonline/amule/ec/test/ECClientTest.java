@@ -18,6 +18,7 @@ import org.junit.Test;
 import com.iukonline.amule.ec.ECCategory;
 import com.iukonline.amule.ec.ECCodes;
 import com.iukonline.amule.ec.ECPartFile;
+import com.iukonline.amule.ec.ECSearchFile;
 import com.iukonline.amule.ec.ECSearchResults;
 import com.iukonline.amule.ec.ECStats;
 import com.iukonline.amule.ec.v204.ECClientV204;
@@ -107,6 +108,20 @@ public class ECClientTest {
         }
         
         System.out.println("Search finished");
+        
+        if (! res.resultMap.isEmpty()) {
+            System.out.println("Starting first result");
+            ECSearchFile sf = res.resultMap.values().iterator().next();
+            cl.searchStartResult(sf);
+            
+            cl.changeDownloadStatus(sf.getHash(), ECCodes.EC_OP_PARTFILE_DELETE);
+            
+            assertTrue(true);
+            return;
+            
+        }
+        
+        assertTrue(false);
     }
     
     @Test

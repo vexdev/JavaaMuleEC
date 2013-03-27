@@ -1,5 +1,7 @@
 package com.iukonline.amule.ec;
 
+import java.util.Comparator;
+
 import com.iukonline.amule.ec.exceptions.ECTagParsingException;
 
 
@@ -47,5 +49,60 @@ public class ECSearchFile {
     public long getSizeFull() {
         return sizeFull;
     }
+    
+    
+    public static class ECSearchFileComparator implements Comparator<ECSearchFile> {
+        
+        // TODO Implement reverse y/n and let application decide
+        
+        public enum ComparatorType {
+            SIZE, SOURCES_COUNT, SOURCES_XFER, FILENAME
+        }
+        
+        private ComparatorType compType;
+
+        
+        public ECSearchFileComparator(ComparatorType compType) {
+            this.compType = compType;
+        }
+
+        public ComparatorType getCompType() {
+            return compType;
+        }
+
+        public void setCompType(ComparatorType compType) {
+            this.compType = compType;
+        }
+
+        @Override
+        public int compare(ECSearchFile object1, ECSearchFile object2) {
+            switch (compType) {
+            case SIZE:
+                return (object2.getSizeFull() > object1.getSizeFull() ? 1 : object1.getSizeFull() == object2.getSizeFull() ? sortByFileName(object1, object2) : -1);
+            case SOURCES_COUNT:
+                return sortBySourcesCount(object1, object2);
+            case SOURCES_XFER:
+                return sortBySourcesCount(object1, object2);                
+            case FILENAME:
+            default:
+                return sortByFileName(object1, object2);
+            }
+        }
+        
+        protected int sortBySourcesCount(ECSearchFile object1, ECSearchFile object2) {
+            return (object2.getSourceCount() > object2.getSourceCount() ? 1 : object1.getSizeFull() == object2.getSizeFull() ? sortByFileName(object1, object2) : -1);
+        }
+        
+        protected int sortBySourcesXfer(ECSearchFile object1, ECSearchFile object2) {
+            return (object2.getSourceXfer() > object2.getSourceXfer() ? 1 : object1.getSizeFull() == object2.getSizeFull() ? sortByFileName(object1, object2) : -1);
+        }
+        
+        protected int sortByFileName(ECSearchFile object1, ECSearchFile object2) {
+            return object1.getFileName().compareToIgnoreCase(object2.getFileName());
+        }
+        
+    }
+
+    
     
 }
