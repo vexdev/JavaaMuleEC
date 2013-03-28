@@ -90,11 +90,11 @@ public class ECSearchFile {
         }
         
         protected int sortBySourcesCount(ECSearchFile object1, ECSearchFile object2) {
-            return (object2.getSourceCount() > object2.getSourceCount() ? 1 : object1.getSizeFull() == object2.getSizeFull() ? sortByFileName(object1, object2) : -1);
+            return (object2.getSourceCount() > object1.getSourceCount() ? 1 : object1.getSourceCount() == object2.getSourceCount() ? sortByFileName(object1, object2) : -1);
         }
         
         protected int sortBySourcesXfer(ECSearchFile object1, ECSearchFile object2) {
-            return (object2.getSourceXfer() > object2.getSourceXfer() ? 1 : object1.getSizeFull() == object2.getSizeFull() ? sortByFileName(object1, object2) : -1);
+            return (object2.getSourceXfer() > object1.getSourceXfer() ? 1 : object1.getSourceXfer() == object2.getSourceXfer() ? sortByFileName(object1, object2) : -1);
         }
         
         protected int sortByFileName(ECSearchFile object1, ECSearchFile object2) {
