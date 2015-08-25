@@ -410,8 +410,8 @@ public class ECClientFake extends ECClient {
             ECTag noCatTag = new ECTag(ECCodes.EC_TAG_CATEGORY, ECTagTypes.EC_TAGTYPE_UINT8, 0);
             noCatTag.addSubTag(new ECTag(ECCodes.EC_TAG_CATEGORY_PATH, ECTagTypes.EC_TAGTYPE_STRING, "/"));
             noCatTag.addSubTag(new ECTag(ECCodes.EC_TAG_CATEGORY_PRIO, ECTagTypes.EC_TAGTYPE_UINT8, 0));
-            noCatTag.addSubTag(new ECTag(ECCodes.EC_TAG_CATEGORY_COLOR, ECTagTypes.EC_TAGTYPE_UINT8, 0));
-            noCatTag.addSubTag(new ECTag(ECCodes.EC_TAG_CATEGORY_PRIO, ECTagTypes.EC_TAGTYPE_UINT8, 0));
+            noCatTag.addSubTag(new ECTag(ECCodes.EC_TAG_CATEGORY_COLOR, ECTagTypes.EC_TAGTYPE_UINT8, 16711680L));
+            noCatTag.addSubTag(new ECTag(ECCodes.EC_TAG_CATEGORY_COMMENT, ECTagTypes.EC_TAGTYPE_STRING, "Comment"));
             noCatTag.addSubTag(new ECTag(ECCodes.EC_TAG_CATEGORY_TITLE, ECTagTypes.EC_TAGTYPE_STRING, "Other"));
             
             catsTag.addSubTag(noCatTag);
@@ -419,8 +419,8 @@ public class ECClientFake extends ECClient {
             ECTag cat1Tag = new ECTag(ECCodes.EC_TAG_CATEGORY, ECTagTypes.EC_TAGTYPE_UINT8, 1);
             cat1Tag.addSubTag(new ECTag(ECCodes.EC_TAG_CATEGORY_PATH, ECTagTypes.EC_TAGTYPE_STRING, "/"));
             cat1Tag.addSubTag(new ECTag(ECCodes.EC_TAG_CATEGORY_PRIO, ECTagTypes.EC_TAGTYPE_UINT8, 0));
-            cat1Tag.addSubTag(new ECTag(ECCodes.EC_TAG_CATEGORY_COLOR, ECTagTypes.EC_TAGTYPE_UINT8, 0));
-            cat1Tag.addSubTag(new ECTag(ECCodes.EC_TAG_CATEGORY_PRIO, ECTagTypes.EC_TAGTYPE_UINT8, 0));
+            cat1Tag.addSubTag(new ECTag(ECCodes.EC_TAG_CATEGORY_COLOR, ECTagTypes.EC_TAGTYPE_UINT8, 255));
+            cat1Tag.addSubTag(new ECTag(ECCodes.EC_TAG_CATEGORY_COMMENT, ECTagTypes.EC_TAGTYPE_STRING, "Comment"));
             cat1Tag.addSubTag(new ECTag(ECCodes.EC_TAG_CATEGORY_TITLE, ECTagTypes.EC_TAGTYPE_STRING, "Cat 1"));
             
             catsTag.addSubTag(cat1Tag);
