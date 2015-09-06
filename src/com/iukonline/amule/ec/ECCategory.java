@@ -25,6 +25,15 @@ public class ECCategory {
         prio = p2;
     }
     
+    public ECCategory(long id, String t, String p1, String c1, long c2, byte p2) {
+    	this.id = id;
+        title = t;
+        path = p1;
+        comment = c1;
+        color = c2;
+        prio = p2;
+    }
+    
     public ECCategory(ECTag t1, byte d) throws ECTagParsingException {
         
         detailLevel = d;
