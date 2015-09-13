@@ -155,6 +155,9 @@ public class ECClientFake extends ECClient {
         case ECCodes.EC_OP_PARTFILE_PRIO_SET:
             epResp = changePartFilePrio(epReq);
             break;
+        case ECCodes.EC_OP_PARTFILE_SET_CAT:
+            epResp = changePartFileCat(epReq);
+            break;
         case ECCodes.EC_OP_RENAME_FILE:
             epResp = renamePartFile(epReq);
             break;
@@ -355,6 +358,29 @@ public class ECClientFake extends ECClient {
         
     }
 
+    private ECPacket changePartFileCat(ECPacket epReq) {
+        ECPacket result = new ECPacket();
+        
+        try {
+            byte[] hash = epReq.getTagByName(ECCodes.EC_TAG_PARTFILE).getTagValueHash();
+            ECTag t = partFileList.get(ECUtils.byteArrayToHexString(hash));
+            
+            if (t == null) {
+                result.setOpCode(ECCodes.EC_OP_FAILED);
+                result.addTag(new ECTag(ECCodes.EC_TAG_STRING, ECTagTypes.EC_TAGTYPE_STRING, "Invalid partfile requested"));
+            } else {
+                result.setOpCode(ECCodes.EC_OP_NOOP);
+                t.getSubTagByName(ECCodes.EC_TAG_PARTFILE_CAT).setTagValueUInt(epReq.getTagByName(ECCodes.EC_TAG_PARTFILE).getSubTagByName(ECCodes.EC_TAG_PARTFILE_CAT).getTagValueUInt());
+            }
+        } catch (DataFormatException e1) {
+            
+            e1.printStackTrace();
+        }
+        
+        return result;
+        
+    }
+    
     private ECPacket renamePartFile(ECPacket epReq) {
         ECPacket result = new ECPacket();
         

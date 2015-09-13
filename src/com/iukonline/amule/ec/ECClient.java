@@ -395,7 +395,21 @@ public class ECClient {
         if (epResp.getOpCode() != ECCodes.EC_OP_NOOP) throw new ECPacketParsingException("Unexpected response to set priority", epResp.getRawPacket());        
     }
     
-
+    public void setPartFileCategory(byte[] hash, long catId) throws IOException, ECClientException, ECPacketParsingException, ECServerException {
+        ECPacket epReq = new ECPacket();
+        epReq.setOpCode(ECCodes.EC_OP_PARTFILE_SET_CAT);
+        try {
+            ECTag t = new ECTag(ECCodes.EC_TAG_PARTFILE, ECTagTypes.EC_TAGTYPE_HASH16, hash);
+            t.addSubTag(new ECTag(ECCodes.EC_TAG_PARTFILE_CAT, ECTagTypes.EC_TAGTYPE_UINT64, catId));
+            epReq.addTag(t);
+            
+        } catch (DataFormatException e) {
+            throw new ECClientException("Cannot create set priorityrequest", e);
+        }
+        
+        ECPacket epResp = sendRequestAndWaitResponse(epReq);
+        if (epResp.getOpCode() != ECCodes.EC_OP_NOOP) throw new ECPacketParsingException("Unexpected response to set category", epResp.getRawPacket());        
+    }
     
     public ECCategory[] getCategories(byte detailLevel) throws IOException, ECClientException, ECPacketParsingException, ECServerException {
         
