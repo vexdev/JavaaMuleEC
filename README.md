@@ -7,4 +7,4 @@ Project is poorly documented (if documented at all), but I have no time at the m
 
 ### Distribution ###
 
-Set environment variable IUKONLINE_MVN_REPO_HOME to match local Maven repo.
+A pom.xml file is available for compiling and publishing to a local Maven repository. Set environment variable IUKONLINE_MVN_REPO_HOME to match local Maven repo. 
