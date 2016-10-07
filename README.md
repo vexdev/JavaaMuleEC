@@ -11,7 +11,7 @@ A pom.xml file is available for compiling and publishing to a local Maven reposi
 
 ## Copyright ##
 
-Copyright (C) 2012 Gianluca Vegetti
+Copyright (C) 2012 Gianluca Vegetti - iuk@iukonline.com
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
