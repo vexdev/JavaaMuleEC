@@ -39,7 +39,6 @@
   <distributionManagement>        
          <repository>            
                  <id>dropbox</id>                        
-                 <!-- <url>file:///C:/Users/***REMOVED***/Dropbox/Public/iukonline-mvn-repository</url> -->
                  <url>file://${env.IUKONLINE_MVN_REPO_HOME}</url>                      
          </repository>           
  </distributionManagement> 

@@ -21,25 +21,16 @@ import com.iukonline.amule.ec.ECPartFile;
 import com.iukonline.amule.ec.v204.ECClientV204;
 
 /**
- * @author ***REMOVED***
+ * @author gvegetti
  *
  */
 public class ECClientCompatTest {
 
     
-    protected static String SERVER_HOST = "***REMOVED***";
+    protected static String SERVER_HOST = "<TEST SERVER HOST HERE>"
     protected static int SERVER_PORT = 4712;
-    protected static String SERVER_PASSWORD = "***REMOVED***";    
+    protected static String SERVER_PASSWORD = "<TEST SERVER PASSWORD HERE>"
     protected static ECClient cl = new ECClientV204();
-    
-    
-    /*
-    protected static String SERVER_HOST = "192.168.56.101";
-    protected static int SERVER_PORT = 4712;
-    protected static String SERVER_PASSWORD = "test";    
-    protected static ECClient cl = new ECClientV204();
-    */
-    //protected static ECClient cl = new ECClientFake();
     
     protected static Socket socket;
     

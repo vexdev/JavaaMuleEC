@@ -25,17 +25,15 @@ import com.iukonline.amule.ec.v204.ECClientV204;
 import com.iukonline.amule.ec.v204.ECCodesV204;
 
 /**
- * @author ***REMOVED***
+ * @author gvegetti
  *
  */
 public class ECClientTest {
 
     
-    final static String SERVER_HOST = "***REMOVED***";
-    //final static String SERVER_HOST = "192.168.56.101";
+    final static String SERVER_HOST = "<TEST SERVER HOST HERE>";
     final static int SERVER_PORT = 4712;
-    final static String SERVER_PASSWORD = "***REMOVED***";
-    // final static String SERVER_PASSWORD = "test";
+    final static String SERVER_PASSWORD = "<TEST SERVER PASSWORD HERE>";
     
     static ECClientV204 cl;
     static Socket socket;
