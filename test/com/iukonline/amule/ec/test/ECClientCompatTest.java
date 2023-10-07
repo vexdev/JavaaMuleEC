@@ -44,9 +44,9 @@ import com.iukonline.amule.ec.v204.ECClientV204;
 public class ECClientCompatTest {
 
     
-    protected static String SERVER_HOST = "<TEST SERVER HOST HERE>"
+    protected static String SERVER_HOST = "<TEST SERVER HOST HERE>";
     protected static int SERVER_PORT = 4712;
-    protected static String SERVER_PASSWORD = "<TEST SERVER PASSWORD HERE>"
+    protected static String SERVER_PASSWORD = "<TEST SERVER PASSWORD HERE>";
     protected static ECClient cl = new ECClientV204();
     
     protected static Socket socket;
